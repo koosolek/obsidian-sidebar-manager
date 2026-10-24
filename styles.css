@@ -6,11 +6,8 @@
 
 /* --- Our buttons in the tab row ------------------------------------------------------------ */
 
-.osm-controls {
-	display: flex;
-	align-items: center;
-	flex: 0 0 auto;
-	gap: var(--size-2-1);
+.osm-button {
+	flex: none;
 	-webkit-app-region: no-drag;
 }
 
@@ -23,28 +20,35 @@
 	background-color: var(--background-modifier-hover);
 }
 
-/* Mobile: the vault picker's <select> lies invisibly over our vault button. */
-.osm-vault {
-	position: relative;
+/* The overflow button stands in for the current view when that one didn't fit. */
+.osm-overflow.is-active {
+	color: var(--icon-color-active);
+	background-color: var(--background-modifier-hover);
 }
 
-.osm-vault select {
-	position: absolute;
-	inset: 0;
-	width: 100%;
-	height: 100%;
-	padding: 0;
-	opacity: 0;
+.osm-overflowed {
+	display: none !important;
+}
+
+/* --- Desktop: views that don't fit go to the overflow list ------------------------------------ */
+
+.workspace-split.mod-left-split .osm-row > .workspace-tab-header-container-inner {
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.workspace-split.mod-left-split .osm-row > .workspace-tab-header-container-inner > .workspace-tab-header {
+	flex: none;
 }
 
 /* --- Mobile: one row with the views and our buttons ---------------------------------------- */
 
 .workspace-drawer.mod-left .workspace-drawer-tab-options.osm-row {
-	/* Slightly under Obsidian's 44px touch size, so four views and three buttons fit a phone. */
-	--osm-touch-size: 38px;
+	--osm-touch-size: 40px;
 	flex-direction: row;
 	align-items: center;
-	gap: var(--size-2-2);
+	gap: var(--size-2-1);
 }
 
 .workspace-drawer.mod-left .workspace-drawer-tab-options.osm-row .workspace-drawer-tab-select {
@@ -53,24 +57,20 @@
 	min-width: 0;
 }
 
-.workspace-drawer.mod-left .osm-controls {
-	order: 1;
-	flex: none;
-	margin-inline-start: auto;
-	gap: var(--size-2-1);
-	padding-inline-start: var(--size-2-3);
-	border-inline-start: var(--border-width) solid var(--background-modifier-border);
-}
-
 .workspace-drawer.mod-left .osm-button {
 	--icon-size: var(--icon-l);
 	--icon-stroke: var(--icon-l-stroke-width);
+	order: 1;
 	width: var(--osm-touch-size);
 	height: var(--osm-touch-size);
 	padding: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+.workspace-drawer.mod-left .osm-menu {
+	margin-inline-start: auto;
 }
 
 body.osm-row-top .workspace-drawer.mod-left .workspace-drawer-tab-options {
@@ -99,14 +99,14 @@ body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-select {
 body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list,
 body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options.is-collapsed .workspace-drawer-tab-options-list {
 	position: static;
-	flex: 1 1 auto;
+	flex: 0 1 auto;
 	flex-direction: row;
 	align-items: center;
 	gap: var(--size-2-1);
 	min-width: 0;
 	max-height: none;
 	padding: 0;
-	overflow-x: auto;
+	overflow-x: hidden;
 	overflow-y: hidden;
 	opacity: 1;
 	pointer-events: auto;
@@ -121,11 +121,10 @@ body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-li
 	display: none;
 }
 
-/* Buttons give up some width before the row has to scroll. */
 body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list .workspace-tab-header {
 	order: 0;
-	flex: 0 1 var(--osm-touch-size);
-	min-width: 30px;
+	flex: none;
+	width: var(--osm-touch-size);
 	animation: none !important;
 }
 
@@ -158,7 +157,7 @@ body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-conte
 	padding-bottom: var(--size-4-8) !important;
 }
 
-/* --- The actions drop-down ----------------------------------------------------------------- */
+/* --- The drop-downs ------------------------------------------------------------------------ */
 
 .osm-popover {
 	position: fixed;
@@ -173,6 +172,13 @@ body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-conte
 	box-shadow: var(--menu-shadow, var(--shadow-s));
 }
 
+.osm-separator {
+	height: 0;
+	margin: var(--size-2-3) calc(var(--size-2-3) * -1);
+	border-top: var(--border-width) solid var(--background-modifier-border);
+}
+
+/* Our own items and the borrowed view buttons look the same: icon, label. */
 .osm-popover .nav-buttons-container.osm-borrowed {
 	position: static;
 	display: flex;
@@ -190,7 +196,10 @@ body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-conte
 	display: none;
 }
 
+.osm-menu-item,
 .osm-popover .nav-buttons-container.osm-borrowed .clickable-icon {
+	--icon-size: var(--icon-s);
+	--icon-stroke: var(--icon-s-stroke-width);
 	display: flex;
 	align-items: center;
 	justify-content: flex-start;
@@ -202,6 +211,11 @@ body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-conte
 	color: var(--text-normal);
 	font-size: var(--font-ui-small);
 	white-space: nowrap;
+	cursor: var(--cursor);
+}
+
+.osm-menu-item:hover {
+	background-color: var(--background-modifier-hover);
 }
 
 .osm-popover .nav-buttons-container.osm-borrowed .clickable-icon::after {
@@ -212,8 +226,27 @@ body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-conte
 	color: var(--text-accent);
 }
 
+.osm-menu-item-icon,
+.osm-menu-item-check {
+	display: flex;
+	align-items: center;
+	color: var(--icon-color);
+}
+
+.osm-menu-item-title {
+	flex: 1 1 auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.osm-menu-item-check {
+	margin-inline-start: var(--size-4-4);
+}
+
+.is-mobile .osm-menu-item,
 .is-mobile .osm-popover .nav-buttons-container.osm-borrowed .clickable-icon {
 	--icon-size: var(--icon-m);
+	--icon-stroke: var(--icon-m-stroke-width);
 	padding: var(--size-4-2) var(--size-4-3);
 	font-size: var(--font-ui-medium);
 }
@@ -224,14 +257,14 @@ body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-conte
 	font-size: var(--font-ui-small);
 }
 
-/* --- Mobile: room for the keyboard --------------------------------------------------------- */
-
-.workspace-drawer.mod-left.osm-keyboard-open .workspace-drawer-inner {
-	padding-bottom: calc(var(--osm-keyboard-inset) + var(--size-4-2)) !important;
-}
-
 /* Invisible but still laid out, while a menu opened from one of its buttons is showing. */
 .osm-popover.is-parked {
 	visibility: hidden;
 	pointer-events: none;
+}
+
+/* --- Mobile: room for the keyboard --------------------------------------------------------- */
+
+.workspace-drawer.mod-left.osm-keyboard-open .workspace-drawer-inner {
+	padding-bottom: calc(var(--osm-keyboard-inset) + var(--size-4-2)) !important;
 }

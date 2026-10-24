@@ -6,7 +6,8 @@
 	"private": true,
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"deploy:ios": "sh scripts/deploy-ios.sh"
 	},
 	"license": "MIT",
 	"devDependencies": {
