@@ -207,6 +207,48 @@ body.osm-group-actions.is-mobile .osm-sidebar .workspace-leaf-content.osm-groupe
 	margin: var(--size-4-1) var(--size-4-1) 0;
 }
 
+/* Global search vs. a view's filter: the Search view searches all notes, so its field is the
+   prominent one; a view's filter only narrows that view's list, so it's compact and quiet, with a
+   filter icon instead of the magnifier. (Obsidian sizes the field, icon and clear button from
+   --input-height.) */
+body:not(.is-mobile) .osm-sidebar .workspace-leaf-content[data-type="search"] .search-row .search-input-container {
+	--input-height: 34px;
+}
+
+body:not(.is-mobile) .osm-sidebar .workspace-leaf-content[data-type="search"] .search-row .search-input-container input {
+	font-size: var(--font-ui-medium);
+}
+
+body.osm-group-actions .osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header:not(.osm-empty-nav-header) > .search-input-container {
+	--input-height: 26px;
+	--search-icon-size: 14px;
+}
+
+body.osm-group-actions.is-mobile .osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header:not(.osm-empty-nav-header) > .search-input-container {
+	--input-height: 36px;
+	--search-icon-size: 16px;
+}
+
+body.osm-group-actions .osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header:not(.osm-empty-nav-header) > .search-input-container input {
+	height: var(--input-height);
+	font-size: var(--font-ui-smaller);
+	border: 0;
+	border-radius: var(--search-input-radius);
+	box-shadow: none;
+	background-color: var(--background-modifier-form-field);
+}
+
+/* Phone sidebars are the form-field colour already, and their fields are square. */
+body.osm-group-actions.is-mobile .osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header:not(.osm-empty-nav-header) > .search-input-container input {
+	background-color: var(--background-modifier-hover);
+	border-radius: var(--radius-m);
+}
+
+body.osm-group-actions .osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header:not(.osm-empty-nav-header) > .search-input-container::before {
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M7 12h10'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M7 12h10'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E");
+}
+
 /* Phones leave room at the bottom of a view for the floating buttons; they are gone now. */
 body.osm-group-actions.is-phone .workspace-drawer.osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header ~ div:last-child {
 	padding-bottom: var(--size-4-8);

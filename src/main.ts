@@ -53,6 +53,8 @@ export default class SidebarManagerPlugin extends Plugin {
 	private hidden = new Set<HTMLElement>();
 	/** Views marked `osm-grouped-view`, whose header buttons go in the menu. */
 	private groupedViews = new Set<HTMLElement>();
+	/** View filter fields whose placeholder we changed (original kept in data-osm-placeholder). */
+	private filterInputs = new Set<HTMLInputElement>();
 	/** View headers we've marked `osm-empty-nav-header`. */
 	private emptyHeaders = new Set<HTMLElement>();
 	/** Sidebar containers marked with `osm-sidebar`. */
@@ -203,6 +205,11 @@ export default class SidebarManagerPlugin extends Plugin {
 		for (const el of this.groupedViews) el.removeClass("osm-grouped-view");
 		this.groupedViews.clear();
 		for (const el of this.emptyHeaders) el.removeClass("osm-empty-nav-header");
+		for (const input of this.filterInputs) {
+			input.placeholder = input.dataset.osmPlaceholder ?? input.placeholder;
+			delete input.dataset.osmPlaceholder;
+		}
+		this.filterInputs.clear();
 		this.emptyHeaders.clear();
 		this.marked.clear();
 		document.body.removeClass(...BODY_CLASSES);
@@ -268,6 +275,13 @@ export default class SidebarManagerPlugin extends Plugin {
 			);
 			header.toggleClass("osm-empty-nav-header", empty);
 			this.emptyHeaders.add(header);
+			// It filters this view, it doesn't search the vault: say so (see the styles too).
+			const input = header.querySelector<HTMLInputElement>(":scope > .search-input-container input");
+			if (input && input.dataset.osmPlaceholder === undefined) {
+				input.dataset.osmPlaceholder = input.placeholder;
+				input.placeholder = "Filter…";
+				this.filterInputs.add(input);
+			}
 		}
 	}
 
