@@ -7,8 +7,29 @@
 
 import { Menu, Platform, setIcon, WorkspaceLeaf } from "obsidian";
 
+/**
+ * Obsidian's own sidebar views, whose header buttons are actions that belong in the menu. Other
+ * plugins reuse the same markup for content, e.g. Advanced Tables' toolbar is rows of buttons in
+ * `.nav-buttons-container`s, so their views are left alone.
+ */
+const GROUPED_VIEW_TYPES = new Set([
+	"file-explorer",
+	"search",
+	"bookmarks",
+	"tag",
+	"all-properties",
+	"backlink",
+	"outgoing-link",
+	"outline",
+]);
+
+export function hasGroupedActions(leaf: WorkspaceLeaf | undefined): boolean {
+	return !!leaf?.view && GROUPED_VIEW_TYPES.has(leaf.view.getViewType());
+}
+
 export function navButtonsOf(leaf: WorkspaceLeaf | undefined): HTMLElement | null {
-	const el = leaf?.view?.containerEl.querySelector<HTMLElement>(".nav-header .nav-buttons-container");
+	if (!hasGroupedActions(leaf)) return null;
+	const el = leaf!.view.containerEl.querySelector<HTMLElement>(".nav-header .nav-buttons-container");
 	return el && el.querySelector(".clickable-icon") ? el : null;
 }
 

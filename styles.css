@@ -173,18 +173,18 @@ body.osm-mobile-tabs .workspace-drawer.osm-sidebar .workspace-drawer-tab-options
 
 /* --- Each view's own action buttons, now behind the actions button --------------------------- */
 
-body.osm-group-actions .workspace-split.osm-sidebar .nav-header > .nav-buttons-container,
-body.osm-group-actions .workspace-drawer.osm-sidebar .nav-header > .nav-buttons-container {
+body.osm-group-actions .workspace-split.osm-sidebar .osm-grouped-view .nav-header > .nav-buttons-container,
+body.osm-group-actions .workspace-drawer.osm-sidebar .osm-grouped-view .nav-header > .nav-buttons-container {
 	display: none;
 }
 
 /* A header that held nothing but those buttons (marked by the plugin). */
-body.osm-group-actions .osm-sidebar .nav-header.osm-empty-nav-header {
+body.osm-group-actions .osm-sidebar .osm-grouped-view .nav-header.osm-empty-nav-header {
 	display: none;
 }
 
 /* Phones leave room at the bottom of a view for the floating buttons; they are gone now. */
-body.osm-group-actions.is-phone .workspace-drawer.osm-sidebar .workspace-leaf-content .nav-header ~ div:last-child {
+body.osm-group-actions.is-phone .workspace-drawer.osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header ~ div:last-child {
 	padding-bottom: var(--size-4-8);
 }
 

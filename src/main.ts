@@ -1,5 +1,5 @@
 import { debounce, Menu, Platform, Plugin, setIcon, setTooltip, WorkspaceLeaf } from "obsidian";
-import { Dropdown, DropdownContent, navButtonsOf, placeBeside, submenuPoint, withInAppMenus } from "./dropdown";
+import { Dropdown, DropdownContent, hasGroupedActions, navButtonsOf, placeBeside, submenuPoint, withInAppMenus } from "./dropdown";
 import { KeyboardInset } from "./keyboard";
 import {
 	asMobileDrawer,
@@ -50,6 +50,8 @@ export default class SidebarManagerPlugin extends Plugin {
 	private keyboard: KeyboardInset | null = null;
 	/** Native elements we hid because ours replace them. */
 	private hidden = new Set<HTMLElement>();
+	/** Views marked `osm-grouped-view`, whose header buttons go in the menu. */
+	private groupedViews = new Set<HTMLElement>();
 	/** View headers we've marked `osm-empty-nav-header`. */
 	private emptyHeaders = new Set<HTMLElement>();
 	/** Sidebar containers marked with `osm-sidebar`. */
@@ -120,6 +122,8 @@ export default class SidebarManagerPlugin extends Plugin {
 		for (const el of this.hidden) el.removeClass("osm-hidden", "osm-collapsed");
 		this.hidden.clear();
 		for (const el of this.marked) el.removeClass("osm-sidebar");
+		for (const el of this.groupedViews) el.removeClass("osm-grouped-view");
+		this.groupedViews.clear();
 		for (const el of this.emptyHeaders) el.removeClass("osm-empty-nav-header");
 		this.emptyHeaders.clear();
 		this.marked.clear();
@@ -162,18 +166,24 @@ export default class SidebarManagerPlugin extends Plugin {
 		}
 
 		this.hideReplacedNatives();
-		if (!this.dropdown.isOpen) this.markEmptyNavHeaders(hosts);
+		if (!this.dropdown.isOpen) this.markGroupedViews(hosts);
 	}
 
 	/**
-	 * With view actions in the menu, a view header that held nothing but those buttons would be an
-	 * empty strip: mark it so it can be hidden. (Done here rather than with a CSS has-selector, which is
-	 * slow to re-evaluate.) Hidden children, like a search filter that's switched off, don't count.
+	 * Marks Obsidian's own sidebar views, whose header buttons move into the menu (only those: other
+	 * plugins' views can use the same markup for their content). A header that held nothing but
+	 * those buttons would be an empty strip, so it's marked to be hidden too. (Done here rather than
+	 * with a CSS has-selector, which is slow to re-evaluate.) Hidden children, like a search filter
+	 * that's switched off, don't count.
 	 */
-	private markEmptyNavHeaders(hosts: Host[]) {
+	private markGroupedViews(hosts: Host[]) {
 		if (!this.settings.groupActions) return;
 		for (const leaf of hosts.flatMap((h) => h.leaves())) {
-			const header = leaf.view?.containerEl.querySelector<HTMLElement>(".nav-header");
+			if (!hasGroupedActions(leaf)) continue;
+			const viewEl = leaf.view.containerEl;
+			viewEl.addClass("osm-grouped-view");
+			this.groupedViews.add(viewEl);
+			const header = viewEl.querySelector<HTMLElement>(".nav-header");
 			if (!header) continue;
 			const empty = Array.from(header.children).every(
 				(c) => c.hasClass("nav-buttons-container") || (c as HTMLElement).style.display === "none"
