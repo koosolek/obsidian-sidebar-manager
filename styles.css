@@ -1,0 +1,212 @@
+/* Sidebar Manager */
+
+.osm-hidden {
+	display: none !important;
+}
+
+/* --- Our buttons in the tab row ------------------------------------------------------------ */
+
+.osm-controls {
+	display: flex;
+	align-items: center;
+	flex: 0 0 auto;
+	gap: var(--size-2-1);
+	-webkit-app-region: no-drag;
+}
+
+.osm-button.is-disabled {
+	opacity: 0.4;
+}
+
+.osm-button.has-active-menu {
+	color: var(--icon-color-active);
+	background-color: var(--background-modifier-hover);
+}
+
+/* Mobile: the vault picker's <select> lies invisibly over our vault button. */
+.osm-vault {
+	position: relative;
+}
+
+.osm-vault select {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	opacity: 0;
+}
+
+/* --- Mobile: one row with the views and our buttons ---------------------------------------- */
+
+.workspace-drawer.mod-left .workspace-drawer-tab-options.osm-row {
+	flex-direction: row;
+	align-items: center;
+	gap: var(--size-2-2);
+}
+
+.workspace-drawer.mod-left .workspace-drawer-tab-options.osm-row .workspace-drawer-tab-select {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.workspace-drawer.mod-left .osm-controls {
+	margin-inline-start: auto;
+	gap: var(--size-2-2);
+}
+
+.workspace-drawer.mod-left .osm-button {
+	--icon-size: var(--icon-l);
+	--icon-stroke: var(--icon-l-stroke-width);
+	width: var(--touch-size-m);
+	height: var(--touch-size-m);
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+body.osm-row-top .workspace-drawer.mod-left .workspace-drawer-tab-options {
+	order: -1;
+	margin-bottom: var(--size-4-1);
+}
+
+body.osm-row-bottom .workspace-drawer.mod-left .workspace-drawer-tab-options {
+	order: 2;
+}
+
+/* Views as buttons instead of the drop-down selector. */
+body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-select {
+	display: none;
+}
+
+body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list,
+body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options.is-collapsed .workspace-drawer-tab-options-list {
+	position: static;
+	flex: 1 1 auto;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--size-2-2);
+	min-width: 0;
+	max-height: none;
+	padding: 0;
+	overflow-x: auto;
+	overflow-y: hidden;
+	opacity: 1;
+	pointer-events: auto;
+	background: none;
+	box-shadow: none;
+	transition: none;
+	scrollbar-width: none;
+}
+
+body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list::-webkit-scrollbar {
+	display: none;
+}
+
+body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list .workspace-tab-header {
+	order: 0;
+	flex: 0 0 auto;
+	animation: none !important;
+}
+
+body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list .workspace-tab-header-inner {
+	width: var(--touch-size-m);
+	height: var(--touch-size-m);
+	padding: 0;
+	justify-content: center;
+}
+
+body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list .workspace-tab-header-inner-title {
+	display: none;
+}
+
+/* --- Each view's own action buttons, now behind the actions button --------------------------- */
+
+body.osm-group-actions .workspace-split.mod-left-split .nav-header > .nav-buttons-container,
+body.osm-group-actions .workspace-drawer.mod-left .nav-header > .nav-buttons-container {
+	display: none;
+}
+
+/* A header that held nothing but those buttons. */
+body.osm-group-actions .workspace-split.mod-left-split .nav-header:not(:has(> :not(.nav-buttons-container))),
+body.osm-group-actions .workspace-drawer.mod-left .nav-header:not(:has(> :not(.nav-buttons-container))) {
+	display: none;
+}
+
+/* Phones leave room at the bottom of a view for the floating buttons; they are gone now. */
+body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-content .nav-header ~ div:last-child {
+	padding-bottom: var(--size-4-8) !important;
+}
+
+/* --- The actions drop-down ----------------------------------------------------------------- */
+
+.osm-popover {
+	position: fixed;
+	z-index: var(--layer-menu);
+	min-width: 200px;
+	max-width: calc(100vw - 16px);
+	overflow-y: auto;
+	padding: var(--size-2-3);
+	background-color: var(--menu-background, var(--background-secondary));
+	border: var(--border-width) solid var(--menu-border-color, var(--background-modifier-border-hover));
+	border-radius: var(--menu-radius, var(--radius-m));
+	box-shadow: var(--menu-shadow, var(--shadow-s));
+}
+
+.osm-popover .nav-buttons-container.osm-borrowed {
+	position: static;
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-items: stretch;
+	gap: 0;
+	padding: 0;
+	margin: 0;
+	border: none;
+	background: none;
+}
+
+.osm-popover .nav-buttons-container.osm-borrowed::after {
+	display: none;
+}
+
+.osm-popover .nav-buttons-container.osm-borrowed .clickable-icon {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: var(--size-4-2);
+	width: auto;
+	height: auto;
+	padding: var(--size-4-1) var(--size-4-2);
+	border-radius: var(--radius-s);
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+	white-space: nowrap;
+}
+
+.osm-popover .nav-buttons-container.osm-borrowed .clickable-icon::after {
+	content: attr(aria-label);
+}
+
+.osm-popover .nav-buttons-container.osm-borrowed .clickable-icon.is-active {
+	color: var(--text-accent);
+}
+
+.is-mobile .osm-popover .nav-buttons-container.osm-borrowed .clickable-icon {
+	--icon-size: var(--icon-m);
+	padding: var(--size-4-2) var(--size-4-3);
+	font-size: var(--font-ui-medium);
+}
+
+.osm-popover-empty {
+	padding: var(--size-4-1) var(--size-4-2);
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+/* --- Mobile: room for the keyboard --------------------------------------------------------- */
+
+.workspace-drawer.mod-left.osm-keyboard-open .workspace-drawer-inner {
+	padding-bottom: calc(var(--osm-keyboard-inset) + var(--size-4-2)) !important;
+}
