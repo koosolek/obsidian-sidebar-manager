@@ -17,6 +17,10 @@ export interface MobileDrawer {
 	currentTab: number;
 	isPinned: boolean;
 	selectTabIndex(index: number): void;
+	insertChild(index: number, leaf: WorkspaceLeaf): void;
+	removeChild(leaf: WorkspaceLeaf): void;
+	/** Redraws the drawer: the view list and the view showing. */
+	recomputeChildrenDimensions?(): void;
 }
 
 /** A tab group: on desktop each group in the left sidebar has its own tab header row. */

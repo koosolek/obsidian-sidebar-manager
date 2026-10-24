@@ -9,6 +9,7 @@ import {
 	tabGroupsIn,
 	tabHeaderOf,
 } from "./obsidian-internals";
+import { applyLayout, isSidebarLayout, readLayout, sameLayout, SidebarLayout } from "./layout";
 import { DEFAULT_SETTINGS, SidebarManagerSettings, SidebarManagerSettingTab } from "./settings";
 
 /** A row of view tabs in the left sidebar that gets our buttons. */
@@ -58,14 +59,24 @@ export default class SidebarManagerPlugin extends Plugin {
 	private marked = new Set<HTMLElement>();
 
 	private requestRefresh = debounce(() => this.refresh(), 50, true);
+	/** Desktop: the sidebar arrangement last seen, to notice when the user rearranges it. */
+	private desktopLayout: SidebarLayout | null = null;
+	private settingTab: SidebarManagerSettingTab | null = null;
+	private requestRecordLayout = debounce(() => void this.recordDesktopLayout(), 1000, true);
 
 	async onload() {
 		await this.loadSettings();
-		this.addSettingTab(new SidebarManagerSettingTab(this.app, this));
+		this.settingTab = new SidebarManagerSettingTab(this.app, this);
+		this.addSettingTab(this.settingTab);
 
 		this.app.workspace.onLayoutReady(() => {
+			this.followLayout();
+			void this.recordDesktopLayout();
 			this.apply();
+			// The layout lists name the views, which only exist once the workspace has loaded.
+			this.settingTab?.update();
 			this.registerEvent(this.app.workspace.on("layout-change", this.requestRefresh));
+			this.registerEvent(this.app.workspace.on("layout-change", this.requestRecordLayout));
 			this.registerEvent(this.app.workspace.on("active-leaf-change", this.requestRefresh));
 			// Sidebar views load lazily; catch the nav buttons they add after the first pass.
 			this.registerInterval(window.setInterval(() => this.refresh(), 2000));
@@ -83,12 +94,62 @@ export default class SidebarManagerPlugin extends Plugin {
 		for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof SidebarManagerSettings)[]) {
 			if (saved?.[key] !== undefined) Object.assign(this.settings, { [key]: saved[key] });
 		}
+		if (!isSidebarLayout(this.settings.layout)) this.settings.layout = null;
+	}
+
+	/** data.json changed through sync (e.g. the desktop recorded a new sidebar layout). */
+	async onExternalSettingsChange() {
+		await this.loadSettings();
+		if (!this.app.workspace.layoutReady) return;
+		this.teardown();
+		this.followLayout();
+		this.apply();
+		this.settingTab?.update();
+	}
+
+	// --- sidebar layout ----------------------------------------------------------------------
+
+	/**
+	 * Desktop: records the sidebar arrangement in the settings, so mobile can follow it. Only when
+	 * the user has rearranged since the last look (or nothing is recorded yet), so an arrangement
+	 * edited on the phone isn't overwritten just by opening the desktop app.
+	 */
+	private async recordDesktopLayout() {
+		if (Platform.isMobile || !this.settings.syncLayout) return;
+		const current = readLayout(this.app);
+		const rearranged = this.desktopLayout !== null && !sameLayout(current, this.desktopLayout);
+		this.desktopLayout = current;
+		if ((rearranged || this.settings.layout === null) && !sameLayout(current, this.settings.layout)) {
+			this.settings.layout = current;
+			await this.saveData(this.settings);
+			this.settingTab?.update();
+		}
+	}
+
+	/** Mobile: arranges the sidebars as recorded. */
+	private followLayout() {
+		if (!Platform.isMobile || !this.settings.syncLayout || !this.settings.layout) return;
+		if (applyLayout(this.app, this.settings.layout)) this.requestRefresh();
+	}
+
+	/** The arrangement the settings editor shows: the recorded one, or this device's own. */
+	layoutForEditing(): SidebarLayout {
+		return this.settings.layout ?? readLayout(this.app);
+	}
+
+	/** Saves an arrangement edited in the settings, and applies it on mobile. */
+	async setLayout(layout: SidebarLayout) {
+		this.settings.layout = layout;
+		await this.saveData(this.settings);
+		this.followLayout();
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
 		if (this.app.workspace.layoutReady) {
 			this.teardown();
+			this.followLayout();
+			void this.recordDesktopLayout();
 			this.apply();
 		}
 	}
