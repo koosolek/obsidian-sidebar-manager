@@ -5,7 +5,7 @@
 // drop-down so every button keeps Obsidian's click handlers, toggle states and the position of the
 // menus it opens. When the drop-down closes it goes back where it was.
 
-import { Platform, setIcon, WorkspaceLeaf } from "obsidian";
+import { Menu, Platform, setIcon, WorkspaceLeaf } from "obsidian";
 
 export function navButtonsOf(leaf: WorkspaceLeaf | undefined): HTMLElement | null {
 	const el = leaf?.view?.containerEl.querySelector<HTMLElement>(".nav-header .nav-buttons-container");
@@ -124,7 +124,7 @@ export class Dropdown {
 			const at = submenuPoint(button);
 			const relayed = new MouseEvent("click", { bubbles: true, cancelable: true, view: window, clientX: at.x, clientY: at.y });
 			(relayed as MouseEvent & { osmRelayed?: boolean }).osmRelayed = true;
-			button.dispatchEvent(relayed);
+			withInAppMenus(() => button.dispatchEvent(relayed));
 		};
 		popoverEl.addEventListener("click", onClickCapture, true);
 		popoverEl.addEventListener("click", onClick);
@@ -208,6 +208,22 @@ export class Dropdown {
 		popoverEl.style.top = `${Math.max(viewTop + margin, top)}px`;
 		popoverEl.style.left = `${left}px`;
 		popoverEl.style.maxHeight = `${Math.max(120, (top > a.top ? viewBottom - a.bottom : above) - margin * 2)}px`;
+	}
+}
+
+/**
+ * Runs `open` with Obsidian's in-app menus instead of the system's (macOS uses system menus by
+ * default). A system menu can't be measured or moved, so a submenu opening to the left of the
+ * drop-down would land at a guessed distance; an in-app one is placed right beside it.
+ */
+export function withInAppMenus<T>(open: () => T): T {
+	const menuClass = Menu as unknown as { useNativeMenu?: boolean };
+	const was = menuClass.useNativeMenu;
+	menuClass.useNativeMenu = false;
+	try {
+		return open();
+	} finally {
+		menuClass.useNativeMenu = was;
 	}
 }
 

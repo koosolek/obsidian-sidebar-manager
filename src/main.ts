@@ -1,5 +1,5 @@
 import { debounce, Menu, Notice, Platform, Plugin, setIcon, setTooltip, WorkspaceLeaf } from "obsidian";
-import { Dropdown, DropdownContent, navButtonsOf, placeBeside, submenuPoint } from "./dropdown";
+import { Dropdown, DropdownContent, navButtonsOf, placeBeside, submenuPoint, withInAppMenus } from "./dropdown";
 import { KeyboardInset } from "./keyboard";
 import {
 	asMobileDrawer,
@@ -305,7 +305,7 @@ export default class SidebarManagerPlugin extends Plugin {
 
 	/** Obsidian's own menu: beside the item on desktop, a sheet from the bottom on phones. */
 	private showVaultMenu(itemEl: HTMLElement) {
-		const menu = new Menu();
+		const menu = withInAppMenus(() => new Menu());
 		for (const v of this.vaults()) {
 			menu.addItem((i) => i.setTitle(v.name).setIcon("vault").setChecked(v.current).onClick(() => v.open()));
 		}
