@@ -1,5 +1,5 @@
 import { debounce, Menu, Notice, Platform, Plugin, setIcon, setTooltip, WorkspaceLeaf } from "obsidian";
-import { Dropdown, DropdownContent, navButtonsOf, placeBeside } from "./dropdown";
+import { Dropdown, DropdownContent, navButtonsOf, placeBeside, submenuPoint } from "./dropdown";
 import { KeyboardInset } from "./keyboard";
 import {
 	asMobileDrawer,
@@ -155,15 +155,21 @@ export default class SidebarManagerPlugin extends Plugin {
 		this.hideReplacedNatives();
 	}
 
-	/** The sidebars this plugin manages: always the left one, the right one if switched on. */
+	/** The sidebars this plugin manages, per the "Apply to" setting. */
 	private sidebars(): unknown[] {
 		const { leftSplit, rightSplit } = this.app.workspace;
-		return this.settings.rightSidebar ? [leftSplit, rightSplit] : [leftSplit];
+		const which = this.settings.sidebars;
+		return [which !== "right" ? leftSplit : null, which !== "left" ? rightSplit : null].filter((x) => x !== null);
+	}
+
+	private managesLeft(): boolean {
+		return this.settings.sidebars !== "right";
 	}
 
 	private hosts(): Host[] {
 		// Only the left sidebar's first row gets the vault and settings sections.
-		return this.sidebars().flatMap((split, side) => this.hostsIn(split, side === 0));
+		const left = this.app.workspace.leftSplit;
+		return this.sidebars().flatMap((split) => this.hostsIn(split, split === left));
 	}
 
 	private hostsIn(split: unknown, isLeft: boolean): Host[] {
@@ -219,7 +225,7 @@ export default class SidebarManagerPlugin extends Plugin {
 		const c: Controls = { host, menuEl: null, overflowEl: null, resizeObserver: null };
 		const s = this.settings;
 
-		if (s.groupActions || (host.primary && (s.vaultInMenu || s.settingsInMenu))) {
+		if (s.groupActions || (host.primary && s.vaultAndSettingsInMenu)) {
 			const menuEl = (c.menuEl = this.button("lucide-ellipsis", "Menu", "osm-menu"));
 			menuEl.addEventListener("click", (e) => {
 				e.preventDefault();
@@ -262,6 +268,8 @@ export default class SidebarManagerPlugin extends Plugin {
 		const inner = b.createDiv("workspace-tab-header-inner");
 		setIcon(inner.createDiv("workspace-tab-header-inner-icon"), icon);
 		setTooltip(b, label);
+		// Don't take focus: on mobile that would close the keyboard of a search field being typed in.
+		b.addEventListener("mousedown", (e) => e.preventDefault());
 		return b;
 	}
 
@@ -269,7 +277,7 @@ export default class SidebarManagerPlugin extends Plugin {
 
 	private menuHasContent(host: Host): boolean {
 		const s = this.settings;
-		return (s.groupActions && !!navButtonsOf(host.activeLeaf())) || (host.primary && (s.vaultInMenu || s.settingsInMenu));
+		return (s.groupActions && !!navButtonsOf(host.activeLeaf())) || (host.primary && s.vaultAndSettingsInMenu);
 	}
 
 	/** Sections: the view's actions; the vaults; "Manage vaults…" and settings. */
@@ -280,7 +288,7 @@ export default class SidebarManagerPlugin extends Plugin {
 			if (buttons) d.borrow(buttons);
 		}
 		if (!host.primary) return;
-		if (s.vaultInMenu) {
+		if (s.vaultAndSettingsInMenu) {
 			// The vaults sit one level down, so a stray tap can't switch vaults.
 			d.section();
 			d.item({
@@ -290,8 +298,6 @@ export default class SidebarManagerPlugin extends Plugin {
 				onClick: (itemEl) => this.showVaultMenu(itemEl),
 			});
 			d.item({ icon: "open-vault", label: "Manage vaults…", onClick: () => openVaultChooser(this.app) });
-		}
-		if (s.settingsInMenu) {
 			d.section();
 			d.item({ icon: "lucide-settings", label: "Settings", onClick: () => openSettings(this.app) });
 		}
@@ -303,8 +309,7 @@ export default class SidebarManagerPlugin extends Plugin {
 		for (const v of this.vaults()) {
 			menu.addItem((i) => i.setTitle(v.name).setIcon("vault").setChecked(v.current).onClick(() => v.open()));
 		}
-		const r = itemEl.getBoundingClientRect();
-		menu.setParentElement(itemEl).showAtPosition({ x: r.right + 2, y: r.top - 4 }, itemEl.doc);
+		menu.setParentElement(itemEl).showAtPosition(submenuPoint(itemEl), itemEl.doc);
 		if (!Platform.isPhone) placeBeside(itemEl);
 	}
 
@@ -384,22 +389,18 @@ export default class SidebarManagerPlugin extends Plugin {
 			el.addClass("osm-hidden");
 			this.hidden.add(el);
 		};
-		const { vaultInMenu, settingsInMenu } = this.settings;
+		if (!this.managesLeft() || !this.settings.vaultAndSettingsInMenu) return;
 		const drawer = this.mobileDrawer();
 		if (drawer) {
 			// Phones: the header only holds the vault name, file counts and settings, so it goes
 			// as a whole. Tablets keep it for the pin button.
-			if (Platform.isPhone && vaultInMenu && settingsInMenu) return hide(drawer.headerEl);
-			if (settingsInMenu) hide(drawer.headerEl.querySelector(".workspace-drawer-header-icon.mod-settings"));
-			if (vaultInMenu) hide(drawer.headerEl.querySelector(".workspace-drawer-header-left"));
+			if (Platform.isPhone) return hide(drawer.headerEl);
+			hide(drawer.headerEl.querySelector(".workspace-drawer-header-icon.mod-settings"));
+			hide(drawer.headerEl.querySelector(".workspace-drawer-header-left"));
 			return;
 		}
-		// Desktop: the sidebar footer holds the vault switcher, help and settings. With both in the
-		// menu the footer goes; help stays in the command palette.
-		const profile = this.leftSplitEl().querySelector(".workspace-sidedock-vault-profile");
-		if (!profile) return;
-		if (vaultInMenu && settingsInMenu) return hide(profile);
-		if (vaultInMenu) hide(profile.querySelector(".workspace-drawer-vault-switcher"));
-		if (settingsInMenu) hide(profile.querySelector(".workspace-drawer-vault-actions .lucide-settings")?.closest(".clickable-icon"));
+		// Desktop: the sidebar footer holds the vault switcher, help and settings; it goes as a
+		// whole (help stays in the command palette).
+		hide(this.leftSplitEl().querySelector(".workspace-sidedock-vault-profile"));
 	}
 }

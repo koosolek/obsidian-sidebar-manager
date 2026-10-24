@@ -58,6 +58,8 @@ export class Dropdown {
 	open(anchorEl: HTMLElement, render: (content: DropdownContent) => void) {
 		const doc = anchorEl.doc;
 		const popoverEl = doc.body.createDiv("osm-popover");
+		// Taps in the drop-down don't take focus, so a search field keeps its keyboard on mobile.
+		popoverEl.addEventListener("mousedown", (e) => e.preventDefault());
 		this.popoverEl = popoverEl;
 		this.anchorEl = anchorEl;
 		anchorEl.addClass("has-active-menu");
@@ -119,8 +121,8 @@ export class Dropdown {
 			if (!button || Platform.isPhone || (e as MouseEvent & { osmRelayed?: boolean }).osmRelayed) return;
 			e.stopPropagation();
 			e.preventDefault();
-			const r = button.getBoundingClientRect();
-			const relayed = new MouseEvent("click", { bubbles: true, cancelable: true, view: window, clientX: r.right + 2, clientY: r.top - 4 });
+			const at = submenuPoint(button);
+			const relayed = new MouseEvent("click", { bubbles: true, cancelable: true, view: window, clientX: at.x, clientY: at.y });
 			(relayed as MouseEvent & { osmRelayed?: boolean }).osmRelayed = true;
 			button.dispatchEvent(relayed);
 		};
@@ -207,6 +209,20 @@ export class Dropdown {
 		popoverEl.style.left = `${left}px`;
 		popoverEl.style.maxHeight = `${Math.max(120, (top > a.top ? viewBottom - a.bottom : above) - margin * 2)}px`;
 	}
+}
+
+/** Typical width of a submenu, to decide which side of the item it fits. */
+const SUBMENU_WIDTH = 240;
+
+/**
+ * Where a submenu of `itemEl` should open: beside its right edge, or beside its left edge when
+ * there's no room on the right (right sidebar). Native macOS menus can't be moved once open, and
+ * would otherwise be pushed back over the drop-down.
+ */
+export function submenuPoint(itemEl: HTMLElement): { x: number; y: number } {
+	const r = itemEl.getBoundingClientRect();
+	const fitsRight = r.right + 2 + SUBMENU_WIDTH <= window.innerWidth - 8;
+	return { x: fitsRight ? r.right + 2 : Math.max(8, r.left - 2 - SUBMENU_WIDTH), y: r.top - 4 };
 }
 
 /** Moves the Obsidian menu just opened from `itemEl` beside it, as a submenu (DOM menus only). */
