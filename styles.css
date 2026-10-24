@@ -179,6 +179,9 @@ body.osm-group-actions.is-phone .workspace-drawer.osm-sidebar .workspace-leaf-co
 
 .osm-popover {
 	position: fixed;
+	top: var(--osm-popover-top, 0);
+	left: var(--osm-popover-left, 0);
+	max-height: var(--osm-popover-max-height, none);
 	z-index: var(--layer-menu);
 	min-width: 200px;
 	max-width: calc(100vw - 16px);

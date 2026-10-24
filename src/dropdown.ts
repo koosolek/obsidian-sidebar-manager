@@ -205,9 +205,11 @@ export class Dropdown {
 		const above = a.top - viewTop;
 		const top = below >= height + margin || below >= above ? a.bottom + 4 : a.top - 4 - height;
 		const left = Math.min(Math.max(margin, a.right - width), window.innerWidth - width - margin);
-		popoverEl.style.top = `${Math.max(viewTop + margin, top)}px`;
-		popoverEl.style.left = `${left}px`;
-		popoverEl.style.maxHeight = `${Math.max(120, (top > a.top ? viewBottom - a.bottom : above) - margin * 2)}px`;
+		popoverEl.setCssProps({
+			"--osm-popover-top": `${Math.max(viewTop + margin, top)}px`,
+			"--osm-popover-left": `${left}px`,
+			"--osm-popover-max-height": `${Math.max(120, (top > a.top ? viewBottom - a.bottom : above) - margin * 2)}px`,
+		});
 	}
 }
 
@@ -253,6 +255,5 @@ export function placeBeside(itemEl: HTMLElement) {
 	let left = r.right + 2;
 	if (left + width > window.innerWidth - margin) left = Math.max(margin, r.left - width - 2);
 	const top = Math.max(margin, Math.min(r.top - 4, window.innerHeight - height - margin));
-	menu.style.left = `${left}px`;
-	menu.style.top = `${top}px`;
+	menu.setCssStyles({ left: `${left}px`, top: `${top}px` });
 }

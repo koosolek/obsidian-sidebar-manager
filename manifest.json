@@ -2,8 +2,9 @@
 	"id": "sidebar-manager",
 	"name": "Sidebar Manager",
 	"version": "0.1.0",
-	"minAppVersion": "1.6.0",
-	"description": "Tidies the left sidebar: tab buttons on mobile, each view's actions under one menu, vault switcher and settings in the tab row, and a sidebar that stays above the keyboard.",
+	"minAppVersion": "1.14.0",
+	"description": "Reorganize the sidebars: view buttons on mobile, one menu for each view's actions, the vault switcher and settings, a list for views that don't fit, and search that stays above the keyboard.",
 	"author": "Mihkel Ronk",
-	"isDesktopOnly": false
+	"isDesktopOnly": false,
+	"authorUrl": "https://github.com/koosolek"
 }

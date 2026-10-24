@@ -258,7 +258,7 @@ export default class SidebarManagerPlugin extends Plugin {
 		c.menuEl?.remove();
 		c.overflowEl?.remove();
 		c.host.rowEl.removeClass("osm-row");
-		c.host.rowEl.style.removeProperty("--osm-tab-height");
+		c.host.rowEl.setCssProps({ "--osm-tab-height": "" });
 		for (const leaf of c.host.leaves()) tabHeaderOf(leaf)?.removeClass("osm-overflowed");
 	}
 
@@ -361,7 +361,7 @@ export default class SidebarManagerPlugin extends Plugin {
 		if (!tabsEl.isConnected || tabsEl.clientWidth === 0) return;
 		// Our buttons take the views' height (on desktop that comes from the tab strip around them).
 		const height = headers[0]?.offsetHeight;
-		if (height) host.rowEl.style.setProperty("--osm-tab-height", `${height}px`);
+		if (height) host.rowEl.setCssProps({ "--osm-tab-height": `${height}px` });
 		const overflows = () => tabsEl.scrollWidth > tabsEl.clientWidth + 1;
 		if (!overflows()) return;
 

@@ -90,7 +90,6 @@ export class KeyboardInset {
 
 	private apply(drawer: HTMLElement, px: number) {
 		drawer.toggleClass("osm-keyboard-open", px > 0);
-		if (px > 0) drawer.style.setProperty("--osm-keyboard-inset", `${px}px`);
-		else drawer.style.removeProperty("--osm-keyboard-inset");
+		drawer.setCssProps({ "--osm-keyboard-inset": px > 0 ? `${px}px` : "" });
 	}
 }
