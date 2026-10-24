@@ -184,21 +184,12 @@ body.osm-group-actions .osm-sidebar .osm-grouped-view .nav-header.osm-empty-nav-
 }
 
 /* With its header gone, a view's list would start right under the tab row: Obsidian's lists
-   (files, bookmarks, outline, properties, backlinks) only keep a small gap above them, meant for
-   below the header. Give them the gap they have at the sides instead, as Tags already does. Views
-   whose header stays (a search field, a switched-on search filter) keep Obsidian's spacing. */
-body.osm-group-actions .osm-sidebar .osm-grouped-view > .nav-header.osm-empty-nav-header ~ .view-content {
+   (files, outline, properties, backlinks…) only keep a small gap above them, meant for below the
+   header. Give them the gap they have at the sides instead, as Tags already does. Views whose
+   header stays (a search field, a switched-on search filter) keep Obsidian's spacing. */
+/* (Specific enough to beat Obsidian's phone rule that sets 8px under a view's header.) */
+body.osm-group-actions .osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header.osm-empty-nav-header ~ div:is(.view-content, .nav-files-container, .tag-container, .backlink-pane, .outgoing-link-pane) {
 	padding-top: var(--size-4-3);
-}
-
-body.osm-group-actions .osm-sidebar .osm-grouped-view > .nav-header.osm-empty-nav-header ~ .view-content > .backlink-pane,
-body.osm-group-actions .osm-sidebar .osm-grouped-view > .nav-header.osm-empty-nav-header ~ .view-content > .outgoing-link-pane {
-	padding-top: var(--size-4-3);
-}
-
-/* Backlinks and outgoing links pad their pane, not the view. */
-body.osm-group-actions .osm-sidebar .osm-grouped-view:is([data-type="backlink"], [data-type="outgoing-link"]) > .nav-header.osm-empty-nav-header ~ .view-content {
-	padding-top: 0;
 }
 
 /* Phones leave room at the bottom of a view for the floating buttons; they are gone now. */
