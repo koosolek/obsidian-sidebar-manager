@@ -1,5 +1,5 @@
 import { debounce, Menu, Notice, Platform, Plugin, setIcon, setTooltip, WorkspaceLeaf } from "obsidian";
-import { Dropdown, DropdownContent, navButtonsOf } from "./dropdown";
+import { Dropdown, DropdownContent, navButtonsOf, placeBeside } from "./dropdown";
 import { KeyboardInset } from "./keyboard";
 import {
 	asMobileDrawer,
@@ -281,6 +281,7 @@ export default class SidebarManagerPlugin extends Plugin {
 		}
 		const r = itemEl.getBoundingClientRect();
 		menu.setParentElement(itemEl).showAtPosition({ x: r.right + 2, y: r.top - 4 }, itemEl.doc);
+		if (!Platform.isPhone) placeBeside(itemEl);
 	}
 
 	private vaults(): Vault[] {

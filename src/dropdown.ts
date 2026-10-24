@@ -88,10 +88,13 @@ export class Dropdown {
 		// open a menu of their own (sort order) need to stay laid out, or Obsidian closes that menu
 		// again; so the drop-down is only made invisible until that menu is gone.
 		const onClick = (e: MouseEvent) => {
-			if (!(e.target as HTMLElement).closest(".osm-borrowed .clickable-icon")) return;
+			const button = (e.target as HTMLElement).closest<HTMLElement>(".osm-borrowed .clickable-icon");
+			if (!button) return;
 			window.setTimeout(() => {
-				if (popoverEl.querySelector(".has-active-menu")) this.holdWhileMenuOpen(true);
-				else this.close();
+				if (!button.hasClass("has-active-menu")) return this.close();
+				// Like the vault submenu: a sheet on phones, beside the item elsewhere.
+				this.holdWhileMenuOpen(Platform.isPhone);
+				if (!Platform.isPhone) placeBeside(button);
 			}, 0);
 		};
 		const onOutside = (e: PointerEvent) => {
@@ -185,4 +188,20 @@ export class Dropdown {
 		popoverEl.style.left = `${left}px`;
 		popoverEl.style.maxHeight = `${Math.max(120, (top > a.top ? viewBottom - a.bottom : above) - margin * 2)}px`;
 	}
+}
+
+/** Moves the Obsidian menu just opened from `itemEl` beside it, as a submenu (DOM menus only). */
+export function placeBeside(itemEl: HTMLElement) {
+	const menus = itemEl.doc.body.querySelectorAll<HTMLElement>(":scope > .menu");
+	const menu = menus[menus.length - 1];
+	if (!menu) return;
+	const r = itemEl.getBoundingClientRect();
+	const margin = 8;
+	const width = menu.offsetWidth;
+	const height = menu.offsetHeight;
+	let left = r.right + 2;
+	if (left + width > window.innerWidth - margin) left = Math.max(margin, r.left - width - 2);
+	const top = Math.max(margin, Math.min(r.top - 4, window.innerHeight - height - margin));
+	menu.style.left = `${left}px`;
+	menu.style.top = `${top}px`;
 }
