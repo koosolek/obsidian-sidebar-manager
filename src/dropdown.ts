@@ -5,7 +5,7 @@
 // drop-down so every button keeps Obsidian's click handlers, toggle states and the position of the
 // menus it opens. When the drop-down closes it goes back where it was.
 
-import { setIcon, WorkspaceLeaf } from "obsidian";
+import { Platform, setIcon, WorkspaceLeaf } from "obsidian";
 
 export function navButtonsOf(leaf: WorkspaceLeaf | undefined): HTMLElement | null {
 	const el = leaf?.view?.containerEl.querySelector<HTMLElement>(".nav-header .nav-buttons-container");
@@ -17,7 +17,12 @@ export interface DropdownItem {
 	label: string;
 	/** Shows a check mark, like Obsidian's menus do for the current choice. */
 	checked?: boolean;
-	onClick(): void;
+	/**
+	 * The item opens an Obsidian menu of its own (shown with a chevron). `onClick` gets the item
+	 * element to anchor that menu to; the drop-down stays until the menu closes.
+	 */
+	submenu?: boolean;
+	onClick(itemEl: HTMLElement): void;
 }
 
 export interface DropdownContent {
@@ -83,21 +88,16 @@ export class Dropdown {
 		// open a menu of their own (sort order) need to stay laid out, or Obsidian closes that menu
 		// again; so the drop-down is only made invisible until that menu is gone.
 		const onClick = (e: MouseEvent) => {
-			const button = (e.target as HTMLElement).closest(".osm-borrowed .clickable-icon");
-			if (!button) return;
+			if (!(e.target as HTMLElement).closest(".osm-borrowed .clickable-icon")) return;
 			window.setTimeout(() => {
-				if (!popoverEl.querySelector(".has-active-menu")) return this.close();
-				popoverEl.addClass("is-parked");
-				const watcher = new MutationObserver(() => {
-					if (!popoverEl.querySelector(".has-active-menu")) this.close();
-				});
-				watcher.observe(popoverEl, { subtree: true, attributes: true, attributeFilter: ["class"] });
-				this.cleanups.push(() => watcher.disconnect());
+				if (popoverEl.querySelector(".has-active-menu")) this.holdWhileMenuOpen(true);
+				else this.close();
 			}, 0);
 		};
 		const onOutside = (e: PointerEvent) => {
-			const t = e.target as Node;
-			if (popoverEl.hasClass("is-parked")) return;
+			const t = e.target as HTMLElement;
+			// Presses in a menu opened from the drop-down belong to that menu.
+			if (popoverEl.hasClass("is-parked") || t.closest?.(".menu")) return;
 			if (!popoverEl.contains(t) && !anchorEl.contains(t)) this.close();
 		};
 		const onKey = (e: KeyboardEvent) => {
@@ -130,15 +130,37 @@ export class Dropdown {
 		this.popoverEl = null;
 	}
 
+	/**
+	 * Keeps the drop-down until the menu opened from it closes. On phones that menu is a sheet over
+	 * the whole screen, so the drop-down hides meanwhile (it stays laid out: Obsidian closes a menu
+	 * whose button is hidden). Elsewhere it stays visible, with the menu beside it like a submenu.
+	 */
+	private holdWhileMenuOpen(park: boolean) {
+		const popoverEl = this.popoverEl;
+		if (!popoverEl) return;
+		popoverEl.toggleClass("is-parked", park);
+		const watcher = new MutationObserver(() => {
+			if (!popoverEl.querySelector(".has-active-menu")) this.close();
+		});
+		watcher.observe(popoverEl, { subtree: true, attributes: true, attributeFilter: ["class"] });
+		this.cleanups.push(() => watcher.disconnect());
+	}
+
 	private renderItem(parent: HTMLElement, item: DropdownItem) {
 		const el = parent.createDiv("osm-menu-item");
 		setIcon(el.createDiv("osm-menu-item-icon"), item.icon);
 		el.createDiv({ cls: "osm-menu-item-title", text: item.label });
-		if (item.checked) setIcon(el.createDiv("osm-menu-item-check"), "lucide-check");
+		if (item.submenu) setIcon(el.createDiv("osm-menu-item-chevron"), "lucide-chevron-right");
+		else if (item.checked) setIcon(el.createDiv("osm-menu-item-check"), "lucide-check");
 		el.addEventListener("click", (e) => {
 			e.preventDefault();
-			this.close();
-			item.onClick();
+			if (!item.submenu) {
+				this.close();
+				return item.onClick(el);
+			}
+			if (el.hasClass("has-active-menu")) return;
+			item.onClick(el);
+			if (el.hasClass("has-active-menu")) this.holdWhileMenuOpen(Platform.isPhone);
 		});
 	}
 

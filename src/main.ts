@@ -1,4 +1,4 @@
-import { debounce, Notice, Platform, Plugin, setIcon, setTooltip, WorkspaceLeaf } from "obsidian";
+import { debounce, Menu, Notice, Platform, Plugin, setIcon, setTooltip, WorkspaceLeaf } from "obsidian";
 import { Dropdown, DropdownContent, navButtonsOf } from "./dropdown";
 import { KeyboardInset } from "./keyboard";
 import {
@@ -257,12 +257,30 @@ export default class SidebarManagerPlugin extends Plugin {
 		}
 		if (!host.primary) return;
 		if (s.vaultInMenu) {
+			// The vaults sit one level down, so a stray tap can't switch vaults.
 			d.section();
-			for (const v of this.vaults()) d.item({ icon: "vault", label: v.name, checked: v.current, onClick: () => v.open() });
+			d.item({
+				icon: "vault",
+				label: `Vault: ${this.app.vault.getName()}`,
+				submenu: true,
+				onClick: (itemEl) => this.showVaultMenu(itemEl),
+			});
+			d.item({ icon: "open-vault", label: "Manage vaults…", onClick: () => openVaultChooser(this.app) });
 		}
-		d.section();
-		if (s.vaultInMenu) d.item({ icon: "open-vault", label: "Manage vaults…", onClick: () => openVaultChooser(this.app) });
-		if (s.settingsInMenu) d.item({ icon: "lucide-settings", label: "Settings", onClick: () => openSettings(this.app) });
+		if (s.settingsInMenu) {
+			d.section();
+			d.item({ icon: "lucide-settings", label: "Settings", onClick: () => openSettings(this.app) });
+		}
+	}
+
+	/** Obsidian's own menu: beside the item on desktop, a sheet from the bottom on phones. */
+	private showVaultMenu(itemEl: HTMLElement) {
+		const menu = new Menu();
+		for (const v of this.vaults()) {
+			menu.addItem((i) => i.setTitle(v.name).setIcon("vault").setChecked(v.current).onClick(() => v.open()));
+		}
+		const r = itemEl.getBoundingClientRect();
+		menu.setParentElement(itemEl).showAtPosition({ x: r.right + 2, y: r.top - 4 }, itemEl.doc);
 	}
 
 	private vaults(): Vault[] {

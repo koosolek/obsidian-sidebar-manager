@@ -6,6 +6,11 @@
 
 /* --- Our buttons in the tab row ------------------------------------------------------------ */
 
+/* One spacing between everything in the row: views, our buttons, the sidebar toggle. */
+.osm-row {
+	--osm-gap: var(--size-2-2);
+}
+
 /* Our buttons are built like the views' tab headers and take their look from the theme. */
 .osm-button {
 	flex: none;
@@ -30,6 +35,13 @@
 	flex: 0 1 auto;
 	min-width: 0;
 	overflow: hidden;
+	gap: var(--osm-gap);
+}
+
+/* Margins, not a row gap: the spacer between them would get a gap on both sides. */
+.workspace-split.mod-left-split .osm-row > .osm-button,
+.workspace-split.mod-left-split .osm-row > .sidebar-toggle-button {
+	margin-inline-start: var(--osm-gap);
 }
 
 .workspace-split.mod-left-split .osm-row > .workspace-tab-header-container-inner > .workspace-tab-header {
@@ -47,7 +59,7 @@
 	--osm-touch-size: 40px;
 	flex-direction: row;
 	align-items: center;
-	gap: var(--size-2-1);
+	gap: var(--osm-gap);
 }
 
 .workspace-drawer.mod-left .workspace-drawer-tab-options.osm-row .workspace-drawer-tab-select {
@@ -108,7 +120,7 @@ body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options.is
 	flex: 0 1 auto;
 	flex-direction: row;
 	align-items: center;
-	gap: var(--size-2-1);
+	gap: var(--osm-gap);
 	min-width: 0;
 	max-height: none;
 	padding: 0;
@@ -232,8 +244,13 @@ body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-conte
 	color: var(--text-accent);
 }
 
+.osm-menu-item.has-active-menu {
+	background-color: var(--background-modifier-hover);
+}
+
 .osm-menu-item-icon,
-.osm-menu-item-check {
+.osm-menu-item-check,
+.osm-menu-item-chevron {
 	display: flex;
 	align-items: center;
 	color: var(--icon-color);
@@ -245,8 +262,13 @@ body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-conte
 	text-overflow: ellipsis;
 }
 
-.osm-menu-item-check {
+.osm-menu-item-check,
+.osm-menu-item-chevron {
 	margin-inline-start: var(--size-4-4);
+}
+
+.osm-menu-item-chevron {
+	color: var(--text-faint);
 }
 
 .is-mobile .osm-menu-item,
