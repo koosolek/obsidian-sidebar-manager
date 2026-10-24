@@ -215,6 +215,10 @@ export default class SidebarManagerPlugin extends Plugin {
 				if (!this.dropdown.isOpen) this.fitTabs(c);
 			});
 			c.resizeObserver.observe(host.rowEl);
+			// The plugin's styles can land after the first measurement; measure again once they have.
+			window.setTimeout(() => {
+				if (!this.dropdown.isOpen) this.fitTabs(c);
+			}, 300);
 		}
 		return c;
 	}
@@ -224,12 +228,15 @@ export default class SidebarManagerPlugin extends Plugin {
 		c.menuEl?.remove();
 		c.overflowEl?.remove();
 		c.host.rowEl.removeClass("osm-row");
+		c.host.rowEl.style.removeProperty("--osm-tab-height");
 		for (const leaf of c.host.leaves()) tabHeaderOf(leaf)?.removeClass("osm-overflowed");
 	}
 
+	/** Built like a view's tab header, so it gets the theme's tab size, colours, hover and open state. */
 	private button(icon: string, label: string, cls: string): HTMLElement {
-		const b = createDiv(`clickable-icon osm-button ${cls}`);
-		setIcon(b, icon);
+		const b = createDiv(`workspace-tab-header tappable osm-button ${cls}`);
+		const inner = b.createDiv("workspace-tab-header-inner");
+		setIcon(inner.createDiv("workspace-tab-header-inner-icon"), icon);
 		setTooltip(b, label);
 		return b;
 	}
@@ -291,7 +298,11 @@ export default class SidebarManagerPlugin extends Plugin {
 
 	// --- views that don't fit ----------------------------------------------------------------
 
-	/** Hides the views that don't fit the row, last first, and shows the overflow button for them. */
+	/**
+	 * Hides the views that don't fit the row, last first, and shows the overflow button for them.
+	 * The current view always stays in the row: if it would be hidden, it takes the place of the
+	 * last view that fits, and that one goes to the overflow list instead.
+	 */
 	private fitTabs(c: Controls) {
 		const { host, overflowEl } = c;
 		if (!overflowEl) return;
@@ -300,13 +311,18 @@ export default class SidebarManagerPlugin extends Plugin {
 		overflowEl.hide();
 		const tabsEl = host.tabsEl;
 		if (!tabsEl.isConnected || tabsEl.clientWidth === 0) return;
+		// Our buttons take the views' height (on desktop that comes from the tab strip around them).
+		const height = headers[0]?.offsetHeight;
+		if (height) host.rowEl.style.setProperty("--osm-tab-height", `${height}px`);
 		const overflows = () => tabsEl.scrollWidth > tabsEl.clientWidth + 1;
 		if (!overflows()) return;
 
 		overflowEl.show();
-		for (let i = headers.length - 1; i > 0 && overflows(); i--) headers[i].addClass("osm-overflowed");
 		const active = host.activeLeaf();
-		overflowEl.toggleClass("is-active", !!active && !!tabHeaderOf(active)?.hasClass("osm-overflowed"));
+		const activeHeader = active ? tabHeaderOf(active) : null;
+		for (let i = headers.length - 1; i >= 0 && overflows(); i--) {
+			if (headers[i] !== activeHeader) headers[i].addClass("osm-overflowed");
+		}
 	}
 
 	private renderOverflow(host: Host, d: DropdownContent) {
