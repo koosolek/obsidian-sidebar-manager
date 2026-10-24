@@ -76,7 +76,11 @@ export default class SidebarManagerPlugin extends Plugin {
 
 	async loadSettings() {
 		const saved = (await this.loadData()) as Partial<SidebarManagerSettings> | null;
-		this.settings = { ...DEFAULT_SETTINGS, ...saved };
+		// Only known keys, so settings from older versions don't linger in data.json.
+		this.settings = { ...DEFAULT_SETTINGS };
+		for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof SidebarManagerSettings)[]) {
+			if (saved?.[key] !== undefined) Object.assign(this.settings, { [key]: saved[key] });
+		}
 	}
 
 	async saveSettings() {
