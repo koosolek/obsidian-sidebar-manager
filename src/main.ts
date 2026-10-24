@@ -59,8 +59,6 @@ export default class SidebarManagerPlugin extends Plugin {
 	private marked = new Set<HTMLElement>();
 
 	private requestRefresh = debounce(() => this.refresh(), 50, true);
-	/** Desktop: the sidebar arrangement last seen, to notice when the user rearranges it. */
-	private desktopLayout: SidebarLayout | null = null;
 	private settingTab: SidebarManagerSettingTab | null = null;
 	private requestRecordLayout = debounce(() => void this.recordDesktopLayout(), 1000, true);
 
@@ -95,6 +93,7 @@ export default class SidebarManagerPlugin extends Plugin {
 			if (saved?.[key] !== undefined) Object.assign(this.settings, { [key]: saved[key] });
 		}
 		if (!isSidebarLayout(this.settings.layout)) this.settings.layout = null;
+		if (!isSidebarLayout(this.settings.desktopLayout)) this.settings.desktopLayout = null;
 	}
 
 	/** data.json changed through sync (e.g. the desktop recorded a new sidebar layout). */
@@ -110,22 +109,19 @@ export default class SidebarManagerPlugin extends Plugin {
 	// --- sidebar layout ----------------------------------------------------------------------
 
 	/**
-	 * Desktop: records the sidebar arrangement in the settings, so mobile can follow it. Only when
-	 * the user has rearranged since the last look (or nothing is recorded yet), so an arrangement
-	 * edited on the phone isn't overwritten just by opening the desktop app.
+	 * Desktop: records the sidebar arrangement in the settings, so mobile can follow it, whenever
+	 * it differs from what this desktop recorded last time (kept in the settings too, so it holds
+	 * across restarts). An arrangement edited on the phone is only replaced once the desktop's own
+	 * arrangement changes, not just by opening the desktop app.
 	 */
 	private async recordDesktopLayout() {
 		if (Platform.isMobile || !this.settings.syncLayout) return;
 		const current = readLayout(this.app);
-		const rearranged = this.desktopLayout !== null && !sameLayout(current, this.desktopLayout);
-		this.desktopLayout = current;
-		// Also when nothing is recorded yet, or only by a version that didn't record closed views.
-		const outdated = this.settings.layout === null || this.settings.layout.closed === undefined;
-		if ((rearranged || outdated) && !sameLayout(current, this.settings.layout)) {
-			this.settings.layout = current;
-			await this.saveData(this.settings);
-			this.settingTab?.update();
-		}
+		if (sameLayout(current, this.settings.desktopLayout)) return;
+		this.settings.desktopLayout = current;
+		this.settings.layout = current;
+		await this.saveData(this.settings);
+		this.settingTab?.update();
 	}
 
 	/** Mobile: arranges the sidebars as recorded. */
@@ -134,9 +130,28 @@ export default class SidebarManagerPlugin extends Plugin {
 		if (applyLayout(this.app, this.settings.layout)) this.requestRefresh();
 	}
 
-	/** The arrangement the settings editor shows: the recorded one, or this device's own. */
+	/**
+	 * The arrangement the settings editor shows: the recorded one (or this device's own), and on
+	 * mobile only the views this device has, including ones the recording doesn't mention.
+	 */
 	layoutForEditing(): SidebarLayout {
-		return this.settings.layout ?? readLayout(this.app);
+		const recorded = this.settings.layout ?? readLayout(this.app);
+		if (!Platform.isMobile) return recorded;
+		const own = readLayout(this.app);
+		const ownTypes = [...own.left, ...own.right];
+		const remaining = [...ownTypes];
+		const take = (types: string[]) =>
+			types.filter((t) => {
+				const i = remaining.indexOf(t);
+				if (i === -1) return false;
+				remaining.splice(i, 1);
+				return true;
+			});
+		const left = take(recorded.left);
+		const right = take(recorded.right);
+		// Views only this device has stay in the sidebar they're in.
+		for (const t of [...remaining]) (own.left.includes(t) ? left : right).push(t);
+		return { ...recorded, left, right };
 	}
 
 	/** Saves an arrangement edited in the settings, and applies it on mobile. */

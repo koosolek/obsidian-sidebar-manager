@@ -19,8 +19,10 @@ export interface SidebarManagerSettings {
 	sidebars: Sidebars;
 	/** Mobile sidebars follow the arrangement made on the desktop. */
 	syncLayout: boolean;
-	/** The recorded sidebar arrangement (view types per sidebar, in order). */
+	/** The recorded sidebar arrangement (view types per sidebar, in order) that mobile follows. */
 	layout: SidebarLayout | null;
+	/** What the desktop recorded last, to tell its own changes from edits made on the phone. */
+	desktopLayout: SidebarLayout | null;
 }
 
 export const DEFAULT_SETTINGS: SidebarManagerSettings = {
@@ -32,6 +34,7 @@ export const DEFAULT_SETTINGS: SidebarManagerSettings = {
 	sidebars: "both",
 	syncLayout: true,
 	layout: null,
+	desktopLayout: null,
 };
 
 export class SidebarManagerSettingTab extends PluginSettingTab {
