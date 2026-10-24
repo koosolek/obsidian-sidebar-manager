@@ -240,8 +240,31 @@ body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-conte
 	content: attr(aria-label);
 }
 
+/* A view's on/off buttons (auto-reveal, show nested tags…): a check mark on the right when on,
+   like Obsidian's menus, instead of the highlighted button. */
 .osm-popover .nav-buttons-container.osm-borrowed .clickable-icon.is-active {
-	color: var(--text-accent);
+	color: var(--text-normal);
+	background-color: transparent;
+}
+
+.osm-popover .nav-buttons-container.osm-borrowed .clickable-icon.is-active:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.osm-popover .nav-buttons-container.osm-borrowed .clickable-icon::after {
+	flex: 1 1 auto;
+}
+
+.osm-popover .nav-buttons-container.osm-borrowed .clickable-icon.is-active::before {
+	content: "";
+	order: 2;
+	flex: none;
+	width: var(--icon-size);
+	height: var(--icon-size);
+	margin-inline-start: var(--size-4-4);
+	background-color: var(--icon-color);
+	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 
 .osm-menu-item.has-active-menu {

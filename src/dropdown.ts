@@ -171,7 +171,9 @@ export class Dropdown {
 		const a = anchorEl.getBoundingClientRect();
 		const vv = window.visualViewport;
 		const viewTop = vv ? vv.offsetTop : 0;
-		const viewBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+		// Obsidian's mobile app lets the keyboard cover the page without the viewport shrinking.
+		const keyboard = parseFloat(getComputedStyle(anchorEl.doc.documentElement).getPropertyValue("--keyboard-height")) || 0;
+		const viewBottom = Math.min(vv ? vv.offsetTop + vv.height : window.innerHeight, window.innerHeight - keyboard);
 		const margin = 8;
 		const width = popoverEl.offsetWidth;
 		const height = popoverEl.offsetHeight;
