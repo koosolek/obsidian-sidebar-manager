@@ -78,6 +78,10 @@ export class Dropdown {
 			borrow: (el) => {
 				this.borrowed.push({ el, parent: el.parentNode!, next: el.nextSibling });
 				el.addClass("osm-borrowed");
+				// Buttons that open a menu of their own get the submenu chevron, like "Vault: …".
+				for (const icon of Array.from(el.querySelectorAll(".clickable-icon > svg.lucide-sort-asc, .clickable-icon > svg.lucide-sort-desc"))) {
+					setIcon(icon.parentElement!.createSpan("osm-menu-item-chevron"), "lucide-chevron-right");
+				}
 				target().appendChild(el);
 			},
 		});
@@ -123,6 +127,7 @@ export class Dropdown {
 		this.cleanups = [];
 		for (const { el, parent, next } of this.borrowed) {
 			el.removeClass("osm-borrowed");
+			el.querySelectorAll(".osm-menu-item-chevron").forEach((c) => c.remove());
 			if (parent.isConnected) parent.insertBefore(el, next && next.parentNode === parent ? next : null);
 			else el.remove();
 		}
