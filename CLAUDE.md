@@ -15,6 +15,7 @@ TypeScript, esbuild, `obsidian` API typings. No runtime dependencies.
 
 - `npm run build` — typecheck + production bundle to `main.js`
 - `npm run dev` — watch build
+- `npm run release` — `scripts/cut-release.sh [patch|minor|major|current|X.Y.Z]`: bumps manifest/package/versions.json, tags `X.Y.Z` (no `v` — Obsidian needs the bare version), pushes; `.github/workflows/release.yml` builds and attaches main.js, manifest.json, styles.css
 - `npm run deploy:ios` — build and copy into the iCloud vault `Sidebar Manager test` (or a vault folder passed after `--`) for testing on iPhone
 
 ## Architecture

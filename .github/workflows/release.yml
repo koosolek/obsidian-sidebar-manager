@@ -1,0 +1,52 @@
+name: Release
+
+# Obsidian looks up a plugin's release by its exact version, so tags are plain "1.2.3" (no "v").
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build + attach plugin files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Check the tag matches manifest.json
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          if [ "$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match manifest.json version $VERSION"
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            main.js
+            manifest.json
+            styles.css
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            1. Download `main.js`, `manifest.json` and `styles.css` below.
+            2. Put them in `<your vault>/.obsidian/plugins/sidebar-manager/` (create the folder).
+            3. In Obsidian: Settings → Community plugins → turn on **Sidebar Manager**.
+
+            On iPhone/iPad, copy the folder into the vault from a computer (for example through iCloud Drive), then reopen Obsidian.

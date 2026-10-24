@@ -9,11 +9,23 @@ An Obsidian plugin that tidies the sidebars, especially on iPhone and iPad.
 
 Every part can be switched on or off in the plugin's settings.
 
-## Install (manual)
+## Install
 
-1. `npm install && npm run build`
-2. Copy `main.js`, `manifest.json` and `styles.css` to `<vault>/.obsidian/plugins/sidebar-manager/`
+1. Download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/koosolek/obsidian-sidebar-manager/releases/latest)
+2. Put them in `<vault>/.obsidian/plugins/sidebar-manager/`
 3. Enable **Sidebar Manager** under Settings → Community plugins
+
+On iPhone/iPad, copy the folder into the vault from a computer (for example through iCloud Drive), then reopen Obsidian.
+
+## Development
+
+- `npm install`, then `npm run build` (or `npm run dev` to rebuild on change)
+- `npm run deploy:ios` builds and copies the plugin into the iCloud vault "Sidebar Manager test"
+- `npm run release` (or `npm run release -- minor|major|X.Y.Z`) bumps the version, tags it and pushes; GitHub Actions then publishes the release with the plugin files attached
+
+## License
+
+MIT
 
 ## Note
 
