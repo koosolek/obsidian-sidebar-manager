@@ -27,6 +27,10 @@ On iPhone/iPad, copy the folder into the vault from a computer (for example thro
 
 MIT
 
+## Other plugins
+
+Only Obsidian's own sidebar views (Files, Search, Bookmarks, Tags, All properties, Backlinks, Outgoing links, Outline) have their buttons moved into the menu. Views from other plugins are left as they are, since some use the same building blocks for their content (Advanced Tables' toolbar, for example). Their views still get the tab row and the overflow list.
+
 ## Note
 
 The plugin works with parts of Obsidian's interface that have no public API. It was built against Obsidian 1.14; a future Obsidian update can change them. Disabling the plugin restores the original sidebar.
