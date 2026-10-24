@@ -1,9 +1,8 @@
-import { debounce, Menu, Notice, Platform, Plugin, setIcon, setTooltip, WorkspaceLeaf } from "obsidian";
+import { debounce, Menu, Platform, Plugin, setIcon, setTooltip, WorkspaceLeaf } from "obsidian";
 import { Dropdown, DropdownContent, navButtonsOf, placeBeside, submenuPoint, withInAppMenus } from "./dropdown";
 import { KeyboardInset } from "./keyboard";
 import {
 	asMobileDrawer,
-	desktopVaults,
 	MobileDrawer,
 	openSettings,
 	openVaultChooser,
@@ -46,10 +45,13 @@ export default class SidebarManagerPlugin extends Plugin {
 	settings: SidebarManagerSettings = { ...DEFAULT_SETTINGS };
 
 	private controls = new Map<HTMLElement, Controls>();
-	private dropdown = new Dropdown();
+	// Closing a drop-down can change a view's header (e.g. its search filter switched on).
+	private dropdown = new Dropdown(() => this.requestRefresh());
 	private keyboard: KeyboardInset | null = null;
 	/** Native elements we hid because ours replace them. */
 	private hidden = new Set<HTMLElement>();
+	/** View headers we've marked `osm-empty-nav-header`. */
+	private emptyHeaders = new Set<HTMLElement>();
 	/** Sidebar containers marked with `osm-sidebar`. */
 	private marked = new Set<HTMLElement>();
 
@@ -73,7 +75,8 @@ export default class SidebarManagerPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const saved = (await this.loadData()) as Partial<SidebarManagerSettings> | null;
+		this.settings = { ...DEFAULT_SETTINGS, ...saved };
 	}
 
 	async saveSettings() {
@@ -110,9 +113,11 @@ export default class SidebarManagerPlugin extends Plugin {
 		this.keyboard = null;
 		for (const c of this.controls.values()) this.removeControls(c);
 		this.controls.clear();
-		for (const el of this.hidden) el.removeClass("osm-hidden");
+		for (const el of this.hidden) el.removeClass("osm-hidden", "osm-collapsed");
 		this.hidden.clear();
 		for (const el of this.marked) el.removeClass("osm-sidebar");
+		for (const el of this.emptyHeaders) el.removeClass("osm-empty-nav-header");
+		this.emptyHeaders.clear();
 		this.marked.clear();
 		document.body.removeClass(...BODY_CLASSES);
 	}
@@ -153,6 +158,25 @@ export default class SidebarManagerPlugin extends Plugin {
 		}
 
 		this.hideReplacedNatives();
+		if (!this.dropdown.isOpen) this.markEmptyNavHeaders(hosts);
+	}
+
+	/**
+	 * With view actions in the menu, a view header that held nothing but those buttons would be an
+	 * empty strip: mark it so it can be hidden. (Done here rather than with a CSS has-selector, which is
+	 * slow to re-evaluate.) Hidden children, like a search filter that's switched off, don't count.
+	 */
+	private markEmptyNavHeaders(hosts: Host[]) {
+		if (!this.settings.groupActions) return;
+		for (const leaf of hosts.flatMap((h) => h.leaves())) {
+			const header = leaf.view?.containerEl.querySelector<HTMLElement>(".nav-header");
+			if (!header) continue;
+			const empty = Array.from(header.children).every(
+				(c) => c.hasClass("nav-buttons-container") || (c as HTMLElement).style.display === "none"
+			);
+			header.toggleClass("osm-empty-nav-header", empty);
+			this.emptyHeaders.add(header);
+		}
 	}
 
 	/** The sidebars this plugin manages, per the "Apply to" setting. */
@@ -225,7 +249,7 @@ export default class SidebarManagerPlugin extends Plugin {
 		const c: Controls = { host, menuEl: null, overflowEl: null, resizeObserver: null };
 		const s = this.settings;
 
-		if (s.groupActions || (host.primary && s.vaultAndSettingsInMenu)) {
+		if (s.groupActions || (host.primary && s.vaultAndSettings === "menu")) {
 			const menuEl = (c.menuEl = this.button("lucide-ellipsis", "Menu", "osm-menu"));
 			menuEl.addEventListener("click", (e) => {
 				e.preventDefault();
@@ -277,7 +301,7 @@ export default class SidebarManagerPlugin extends Plugin {
 
 	private menuHasContent(host: Host): boolean {
 		const s = this.settings;
-		return (s.groupActions && !!navButtonsOf(host.activeLeaf())) || (host.primary && s.vaultAndSettingsInMenu);
+		return (s.groupActions && !!navButtonsOf(host.activeLeaf())) || (host.primary && s.vaultAndSettings === "menu");
 	}
 
 	/** Sections: the view's actions; the vaults; "Manage vaults…" and settings. */
@@ -288,7 +312,7 @@ export default class SidebarManagerPlugin extends Plugin {
 			if (buttons) d.borrow(buttons);
 		}
 		if (!host.primary) return;
-		if (s.vaultAndSettingsInMenu) {
+		if (s.vaultAndSettings === "menu") {
 			// The vaults sit one level down, so a stray tap can't switch vaults.
 			d.section();
 			d.item({
@@ -304,42 +328,57 @@ export default class SidebarManagerPlugin extends Plugin {
 	}
 
 	/** Obsidian's own menu: beside the item on desktop, a sheet from the bottom on phones. */
+	/**
+	 * Phones: Obsidian's menu as a sheet, listing the vaults from Obsidian's own vault picker.
+	 * Desktop: Obsidian's own vault menu, opened from the (hidden) sidebar footer's vault switcher
+	 * and moved beside the item.
+	 */
 	private showVaultMenu(itemEl: HTMLElement) {
-		const menu = withInAppMenus(() => new Menu());
-		for (const v of this.vaults()) {
-			menu.addItem((i) => i.setTitle(v.name).setIcon("vault").setChecked(v.current).onClick(() => v.open()));
+		if (Platform.isMobile) {
+			const menu = new Menu();
+			for (const v of this.mobileVaults()) {
+				menu.addItem((i) => i.setTitle(v.name).setIcon("vault").setChecked(v.current).onClick(() => v.open()));
+			}
+			menu.setParentElement(itemEl).showAtPosition(submenuPoint(itemEl), itemEl.doc);
+			return;
 		}
-		menu.setParentElement(itemEl).showAtPosition(submenuPoint(itemEl), itemEl.doc);
-		if (!Platform.isPhone) placeBeside(itemEl);
+
+		const native = this.leftSplitEl().querySelector<HTMLElement>(".workspace-sidedock-vault-profile .workspace-drawer-vault-switcher");
+		if (!native) return openVaultChooser(this.app);
+		const at = submenuPoint(itemEl);
+		withInAppMenus(() =>
+			native.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window, clientX: at.x, clientY: at.y }))
+		);
+		// The menu belongs to the native switcher; mirror its open state on our item, which keeps
+		// the drop-down open until the menu closes.
+		itemEl.addClass("has-active-menu");
+		window.setTimeout(() => {
+			if (!native.hasClass("has-active-menu")) return itemEl.removeClass("has-active-menu");
+			placeBeside(itemEl);
+			const watcher = new MutationObserver(() => {
+				if (native.hasClass("has-active-menu")) return;
+				watcher.disconnect();
+				itemEl.removeClass("has-active-menu");
+			});
+			watcher.observe(native, { attributes: true, attributeFilter: ["class"] });
+		}, 0);
 	}
 
-	private vaults(): Vault[] {
-		let list: Vault[] = [];
-		if (Platform.isMobile) {
-			// Obsidian's mobile vault picker is a hidden <select>; its options are the vaults, and
-			// picking one is a "change" on it, which Obsidian handles (switch + reload).
-			const select = this.mobileDrawer()?.headerEl.querySelector<HTMLSelectElement>(".workspace-drawer-header-switcher select");
-			list = Array.from(select?.options ?? [])
-				.filter((o) => o.value !== "manage-vaults")
-				.map((o) => ({
-					name: o.text,
-					current: o.selected,
-					open: () => {
-						if (o.selected || !select) return;
-						select.value = o.value;
-						select.dispatchEvent(new Event("change"));
-					},
-				}));
-		} else {
-			const vaults = desktopVaults();
-			list = (vaults?.list ?? []).map((v) => ({
-				name: v.name,
-				current: v.path === vaults!.current,
+	/** The vaults in Obsidian's mobile vault picker, a hidden <select> in the drawer header. */
+	private mobileVaults(): Vault[] {
+		// Picking a vault is a "change" on the <select>, which Obsidian handles (switch + reload).
+		const select = this.mobileDrawer()?.headerEl.querySelector<HTMLSelectElement>(".workspace-drawer-header-switcher select");
+		const list: Vault[] = Array.from(select?.options ?? [])
+			.filter((o) => o.value !== "manage-vaults")
+			.map((o) => ({
+				name: o.text,
+				current: o.selected,
 				open: () => {
-					if (v.path !== vaults!.current && !vaults!.open(v.path)) new Notice("Failed to open vault");
+					if (o.selected || !select) return;
+					select.value = o.value;
+					select.dispatchEvent(new Event("change"));
 				},
 			}));
-		}
 		if (!list.some((v) => v.current)) list.unshift({ name: this.app.vault.getName(), current: true, open: () => {} });
 		return list;
 	}
@@ -389,7 +428,7 @@ export default class SidebarManagerPlugin extends Plugin {
 			el.addClass("osm-hidden");
 			this.hidden.add(el);
 		};
-		if (!this.managesLeft() || !this.settings.vaultAndSettingsInMenu) return;
+		if (!this.managesLeft() || this.settings.vaultAndSettings !== "menu") return;
 		const drawer = this.mobileDrawer();
 		if (drawer) {
 			// Phones: the header only holds the vault name, file counts and settings, so it goes
@@ -400,7 +439,12 @@ export default class SidebarManagerPlugin extends Plugin {
 			return;
 		}
 		// Desktop: the sidebar footer holds the vault switcher, help and settings; it goes as a
-		// whole (help stays in the command palette).
-		hide(this.leftSplitEl().querySelector(".workspace-sidedock-vault-profile"));
+		// whole (help stays in the command palette). Collapsed rather than display: none, so the
+		// vault switcher in it can still open its menu (Obsidian closes menus of hidden elements).
+		const profile = this.leftSplitEl().querySelector<HTMLElement>(".workspace-sidedock-vault-profile");
+		if (profile && !this.hidden.has(profile)) {
+			profile.addClass("osm-collapsed");
+			this.hidden.add(profile);
+		}
 	}
 }

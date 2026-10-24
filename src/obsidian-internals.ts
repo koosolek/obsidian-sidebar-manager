@@ -61,17 +61,3 @@ export function openSettings(app: App) {
 export function openVaultChooser(app: App) {
 	(app as unknown as { openVaultChooser?: () => void }).openVaultChooser?.();
 }
-
-interface IpcRenderer {
-	sendSync(channel: string, ...args: unknown[]): unknown;
-}
-
-/** Desktop only: the vaults Obsidian knows about, the open one, and a way to open another. */
-export function desktopVaults(): { current: string; list: { path: string; name: string }[]; open(path: string): boolean } | null {
-	const ipc = (window as unknown as { electron?: { ipcRenderer?: IpcRenderer } }).electron?.ipcRenderer;
-	if (!ipc) return null;
-	const current = (ipc.sendSync("vault") as { path?: string } | null)?.path ?? "";
-	const known = (ipc.sendSync("vault-list") as Record<string, { path: string }> | null) ?? {};
-	const list = Object.values(known).map((v) => ({ path: v.path, name: v.path.split(/[\\/]/).pop() ?? v.path }));
-	return { current, list, open: (path) => ipc.sendSync("vault-open", path, false) === true };
-}

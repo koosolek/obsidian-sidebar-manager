@@ -45,6 +45,8 @@ export class Dropdown {
 	private borrowed: Borrowed[] = [];
 	private cleanups: (() => void)[] = [];
 
+	constructor(private onClose: () => void = () => {}) {}
+
 	get isOpen() {
 		return this.popoverEl !== null;
 	}
@@ -150,8 +152,10 @@ export class Dropdown {
 		this.borrowed = [];
 		this.anchorEl?.removeClass("has-active-menu");
 		this.anchorEl = null;
+		const wasOpen = this.popoverEl !== null;
 		this.popoverEl?.remove();
 		this.popoverEl = null;
+		if (wasOpen) this.onClose();
 	}
 
 	/**

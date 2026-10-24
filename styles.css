@@ -1,7 +1,21 @@
 /* Sidebar Manager */
 
-.osm-hidden {
-	display: none !important;
+/* Native elements ours replace (selectors specific enough to beat Obsidian's own). */
+.workspace-drawer.osm-sidebar .osm-hidden {
+	display: none;
+}
+
+/* The desktop sidebar footer: collapsed but still laid out, so its vault switcher can open its
+   menu for the "Vault: …" item (Obsidian closes menus whose element is hidden). */
+body:not(.is-mobile) .workspace-split.osm-sidebar.mod-primary-split .workspace-sidedock-vault-profile.osm-collapsed {
+	position: absolute;
+	bottom: 0;
+	height: 0;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	visibility: hidden;
+	pointer-events: none;
 }
 
 /* --- Our buttons in the tab row ------------------------------------------------------------ */
@@ -25,8 +39,8 @@
 	opacity: 0.4;
 }
 
-.osm-overflowed {
-	display: none !important;
+body .osm-sidebar .osm-row .workspace-tab-header.osm-overflowed {
+	display: none;
 }
 
 /* --- Desktop: views that don't fit go to the overflow list ------------------------------------ */
@@ -143,7 +157,7 @@ body.osm-mobile-tabs .workspace-drawer.osm-sidebar .workspace-drawer-tab-options
 	order: 0;
 	flex: none;
 	width: var(--osm-touch-size);
-	animation: none !important;
+	animation: none;
 }
 
 body.osm-mobile-tabs .workspace-drawer.osm-sidebar .workspace-drawer-tab-options-list .workspace-tab-header-inner {
@@ -164,15 +178,14 @@ body.osm-group-actions .workspace-drawer.osm-sidebar .nav-header > .nav-buttons-
 	display: none;
 }
 
-/* A header that held nothing but those buttons. */
-body.osm-group-actions .workspace-split.osm-sidebar .nav-header:not(:has(> :not(.nav-buttons-container))),
-body.osm-group-actions .workspace-drawer.osm-sidebar .nav-header:not(:has(> :not(.nav-buttons-container))) {
+/* A header that held nothing but those buttons (marked by the plugin). */
+body.osm-group-actions .osm-sidebar .nav-header.osm-empty-nav-header {
 	display: none;
 }
 
 /* Phones leave room at the bottom of a view for the floating buttons; they are gone now. */
 body.osm-group-actions.is-phone .workspace-drawer.osm-sidebar .workspace-leaf-content .nav-header ~ div:last-child {
-	padding-bottom: var(--size-4-8) !important;
+	padding-bottom: var(--size-4-8);
 }
 
 /* --- The drop-downs ------------------------------------------------------------------------ */
@@ -329,5 +342,5 @@ body.osm-group-actions.is-phone .workspace-drawer.osm-sidebar .workspace-leaf-co
 /* --- Mobile: room for the keyboard --------------------------------------------------------- */
 
 .workspace-drawer.osm-sidebar.osm-keyboard-open .workspace-drawer-inner {
-	padding-bottom: calc(var(--osm-keyboard-inset) + var(--size-4-2)) !important;
+	padding-bottom: calc(var(--osm-keyboard-inset) + var(--size-4-2));
 }

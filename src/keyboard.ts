@@ -51,13 +51,13 @@ export class KeyboardInset {
 	stop() {
 		this.cleanups.forEach((c) => c());
 		this.cleanups = [];
-		cancelAnimationFrame(this.frame);
+		window.cancelAnimationFrame(this.frame);
 		for (const drawer of this.getDrawerEls()) this.apply(drawer, 0);
 	}
 
 	private schedule() {
-		cancelAnimationFrame(this.frame);
-		this.frame = requestAnimationFrame(() => this.update());
+		window.cancelAnimationFrame(this.frame);
+		this.frame = window.requestAnimationFrame(() => this.update());
 	}
 
 	private cssKeyboardHeight(): number {
