@@ -111,6 +111,20 @@ export class Dropdown {
 			if (e.key === "Escape") this.close();
 		};
 		const onResize = () => this.position();
+		// Obsidian opens a button's menu where the click happened (sort order). Hand it a click at
+		// the item's right edge instead, so it opens beside the item like the vault submenu. This
+		// also places macOS's native menus, which can't be moved once open.
+		const onClickCapture = (e: MouseEvent) => {
+			const button = (e.target as HTMLElement).closest<HTMLElement>(".osm-borrowed .clickable-icon");
+			if (!button || Platform.isPhone || (e as MouseEvent & { osmRelayed?: boolean }).osmRelayed) return;
+			e.stopPropagation();
+			e.preventDefault();
+			const r = button.getBoundingClientRect();
+			const relayed = new MouseEvent("click", { bubbles: true, cancelable: true, view: window, clientX: r.right + 2, clientY: r.top - 4 });
+			(relayed as MouseEvent & { osmRelayed?: boolean }).osmRelayed = true;
+			button.dispatchEvent(relayed);
+		};
+		popoverEl.addEventListener("click", onClickCapture, true);
 		popoverEl.addEventListener("click", onClick);
 		doc.addEventListener("pointerdown", onOutside, true);
 		doc.addEventListener("keydown", onKey, true);

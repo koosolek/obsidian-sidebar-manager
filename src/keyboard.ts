@@ -1,5 +1,5 @@
-// Keeps the mobile left sidebar clear of the on-screen keyboard. Obsidian's mobile app lets the
-// keyboard slide over the web view, so the sidebar's bottom part (on phones: the view selector and
+// Keeps the mobile sidebars clear of the on-screen keyboard. Obsidian's mobile app lets the
+// keyboard slide over the web view, so a sidebar's bottom part (on phones: the view selector and
 // the end of the search results) ends up underneath it. While the keyboard is up we pad the
 // drawer's bottom by exactly the part the keyboard covers.
 
@@ -10,7 +10,7 @@ export class KeyboardInset {
 	private restingInnerHeight = window.innerHeight;
 	private frame = 0;
 
-	constructor(private getDrawerEl: () => HTMLElement | null) {}
+	constructor(private getDrawerEls: () => HTMLElement[]) {}
 
 	start() {
 		const onShow = (e: Event) => {
@@ -52,7 +52,7 @@ export class KeyboardInset {
 		this.cleanups.forEach((c) => c());
 		this.cleanups = [];
 		cancelAnimationFrame(this.frame);
-		this.apply(0);
+		for (const drawer of this.getDrawerEls()) this.apply(drawer, 0);
 	}
 
 	private schedule() {
@@ -78,20 +78,17 @@ export class KeyboardInset {
 	}
 
 	private update() {
-		const drawer = this.getDrawerEl();
-		if (!drawer) return;
-		// Padding doesn't move the drawer's box, so measuring with our inset applied is fine.
-		const inner = drawer.querySelector<HTMLElement>(".workspace-drawer-inner");
-		// Not isShown(): the drawer is position: fixed, so it never has an offsetParent.
-		const rect = inner?.getBoundingClientRect();
-		if (!rect || rect.width === 0) return this.apply(0);
-		const covered = rect.bottom - this.visibleBottom();
-		this.apply(covered > 1 ? Math.round(covered) : 0);
+		const bottom = this.visibleBottom();
+		for (const drawer of this.getDrawerEls()) {
+			// Padding doesn't move the drawer's box, so measuring with our inset applied is fine.
+			// Not isShown(): the drawer is position: fixed, so it never has an offsetParent.
+			const rect = drawer.querySelector<HTMLElement>(".workspace-drawer-inner")?.getBoundingClientRect();
+			const covered = rect && rect.width > 0 ? rect.bottom - bottom : 0;
+			this.apply(drawer, covered > 1 ? Math.round(covered) : 0);
+		}
 	}
 
-	private apply(px: number) {
-		const drawer = this.getDrawerEl();
-		if (!drawer) return;
+	private apply(drawer: HTMLElement, px: number) {
 		drawer.toggleClass("osm-keyboard-open", px > 0);
 		if (px > 0) drawer.style.setProperty("--osm-keyboard-inset", `${px}px`);
 		else drawer.style.removeProperty("--osm-keyboard-inset");

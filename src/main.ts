@@ -50,6 +50,8 @@ export default class SidebarManagerPlugin extends Plugin {
 	private keyboard: KeyboardInset | null = null;
 	/** Native elements we hid because ours replace them. */
 	private hidden = new Set<HTMLElement>();
+	/** Sidebar containers marked with `osm-sidebar`. */
+	private marked = new Set<HTMLElement>();
 
 	private requestRefresh = debounce(() => this.refresh(), 50, true);
 
@@ -94,7 +96,9 @@ export default class SidebarManagerPlugin extends Plugin {
 		body.toggleClass("osm-group-actions", s.groupActions);
 
 		if (Platform.isMobile && s.keyboardFix) {
-			this.keyboard = new KeyboardInset(() => this.mobileDrawer()?.containerEl ?? null);
+			this.keyboard = new KeyboardInset(() =>
+				this.sidebars().flatMap((split) => asMobileDrawer(split)?.containerEl ?? [])
+			);
 			this.keyboard.start();
 		}
 		this.refresh();
@@ -108,11 +112,21 @@ export default class SidebarManagerPlugin extends Plugin {
 		this.controls.clear();
 		for (const el of this.hidden) el.removeClass("osm-hidden");
 		this.hidden.clear();
+		for (const el of this.marked) el.removeClass("osm-sidebar");
+		this.marked.clear();
 		document.body.removeClass(...BODY_CLASSES);
 	}
 
-	/** Puts our buttons into every tab row of the left sidebar. Safe to call any time. */
+	/** Puts our buttons into every tab row of the managed sidebars. Safe to call any time. */
 	private refresh() {
+		// Marks the sidebars our styles apply to.
+		for (const split of this.sidebars()) {
+			const el = (split as { containerEl?: HTMLElement }).containerEl;
+			if (el && !this.marked.has(el)) {
+				el.addClass("osm-sidebar");
+				this.marked.add(el);
+			}
+		}
 		const hosts = this.hosts();
 		const byRow = new Map(hosts.map((h) => [h.rowEl, h]));
 
@@ -141,15 +155,25 @@ export default class SidebarManagerPlugin extends Plugin {
 		this.hideReplacedNatives();
 	}
 
+	/** The sidebars this plugin manages: always the left one, the right one if switched on. */
+	private sidebars(): unknown[] {
+		const { leftSplit, rightSplit } = this.app.workspace;
+		return this.settings.rightSidebar ? [leftSplit, rightSplit] : [leftSplit];
+	}
+
 	private hosts(): Host[] {
-		const split = this.app.workspace.leftSplit;
+		// Only the left sidebar's first row gets the vault and settings sections.
+		return this.sidebars().flatMap((split, side) => this.hostsIn(split, side === 0));
+	}
+
+	private hostsIn(split: unknown, isLeft: boolean): Host[] {
 		const drawer = asMobileDrawer(split);
 		if (drawer) {
 			return [
 				{
 					rowEl: drawer.tabsContainerEl,
 					tabsEl: drawer.tabsListEl,
-					primary: true,
+					primary: isLeft,
 					tabButtons: this.settings.mobileTabButtons,
 					leaves: () => drawer.children,
 					activeLeaf: () => drawer.children[drawer.currentTab],
@@ -165,7 +189,7 @@ export default class SidebarManagerPlugin extends Plugin {
 		return tabGroupsIn(split).map((group, i) => ({
 			rowEl: group.tabHeaderContainerEl,
 			tabsEl: group.tabsInnerEl,
-			primary: i === 0,
+			primary: isLeft && i === 0,
 			tabButtons: true,
 			leaves: () => group.children,
 			activeLeaf: () => group.children[group.currentTab],

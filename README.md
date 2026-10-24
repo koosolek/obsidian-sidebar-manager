@@ -1,6 +1,6 @@
 # Sidebar Manager
 
-An Obsidian plugin that tidies the left sidebar, especially on iPhone and iPad.
+An Obsidian plugin that tidies the sidebars, especially on iPhone and iPad.
 
 - **Views as buttons on mobile** — the left sidebar views (files, search, bookmarks, tags…) as a row of icon buttons, like on desktop, instead of the drop-down selector.
 - **One menu button** — a drop-down in the tab row with the current view's own buttons (new note, new folder, sort, collapse…), your vaults, "Manage vaults…" and Settings. Desktop and mobile. With vaults and settings in the menu, the desktop sidebar footer (and the vault header on phones) goes away.

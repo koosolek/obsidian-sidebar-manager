@@ -31,7 +31,7 @@
 
 /* --- Desktop: views that don't fit go to the overflow list ------------------------------------ */
 
-.workspace-split.mod-left-split .osm-row > .workspace-tab-header-container-inner {
+.workspace-split.osm-sidebar .osm-row > .workspace-tab-header-container-inner {
 	flex: 0 1 auto;
 	min-width: 0;
 	overflow: hidden;
@@ -39,41 +39,41 @@
 }
 
 /* Margins, not a row gap: the spacer between them would get a gap on both sides. */
-.workspace-split.mod-left-split .osm-row > .osm-button,
-.workspace-split.mod-left-split .osm-row > .sidebar-toggle-button {
+.workspace-split.osm-sidebar .osm-row > .osm-button,
+.workspace-split.osm-sidebar .osm-row > .sidebar-toggle-button {
 	margin-inline-start: var(--osm-gap);
 }
 
-.workspace-split.mod-left-split .osm-row > .workspace-tab-header-container-inner > .workspace-tab-header {
+.workspace-split.osm-sidebar .osm-row > .workspace-tab-header-container-inner > .workspace-tab-header {
 	flex: none;
 }
 
-.workspace-split.mod-left-split .osm-row > .osm-button {
+.workspace-split.osm-sidebar .osm-row > .osm-button {
 	align-self: center;
 	height: var(--osm-tab-height, auto);
 }
 
 /* --- Mobile: one row with the views and our buttons ---------------------------------------- */
 
-.workspace-drawer.mod-left .workspace-drawer-tab-options.osm-row {
+.workspace-drawer.osm-sidebar .workspace-drawer-tab-options.osm-row {
 	--osm-touch-size: 40px;
 	flex-direction: row;
 	align-items: center;
 	gap: var(--osm-gap);
 }
 
-.workspace-drawer.mod-left .workspace-drawer-tab-options.osm-row .workspace-drawer-tab-select {
+.workspace-drawer.osm-sidebar .workspace-drawer-tab-options.osm-row .workspace-drawer-tab-select {
 	order: 0;
 	flex: 1 1 auto;
 	min-width: 0;
 }
 
-.workspace-drawer.mod-left .osm-button {
+.workspace-drawer.osm-sidebar .osm-button {
 	order: 1;
 	width: var(--osm-touch-size);
 }
 
-.workspace-drawer.mod-left .osm-button .workspace-tab-header-inner {
+.workspace-drawer.osm-sidebar .osm-button .workspace-tab-header-inner {
 	width: 100%;
 	height: var(--osm-touch-size);
 	padding: 0;
@@ -81,27 +81,27 @@
 }
 
 /* The open menu's button looks like the current view's. */
-.workspace-drawer.mod-left .osm-button.has-active-menu .workspace-tab-header-inner {
+.workspace-drawer.osm-sidebar .osm-button.has-active-menu .workspace-tab-header-inner {
 	--icon-color: var(--text-normal);
 	color: var(--text-normal);
 	background-color: var(--nav-item-background-hover);
 }
 
-.workspace-drawer.mod-left .osm-menu {
+.workspace-drawer.osm-sidebar .osm-menu {
 	margin-inline-start: auto;
 }
 
-body.osm-row-top .workspace-drawer.mod-left .workspace-drawer-tab-options {
+body.osm-row-top .workspace-drawer.osm-sidebar .workspace-drawer-tab-options {
 	order: -1;
 	margin-bottom: var(--size-4-1);
 }
 
-body.osm-row-bottom .workspace-drawer.mod-left .workspace-drawer-tab-options {
+body.osm-row-bottom .workspace-drawer.osm-sidebar .workspace-drawer-tab-options {
 	order: 2;
 }
 
 /* Phones open the selector's list upwards from the bottom; at the top it has to open downwards. */
-body.osm-row-top.is-phone .workspace-drawer.mod-left .workspace-drawer-tab-options-list {
+body.osm-row-top.is-phone .workspace-drawer.osm-sidebar .workspace-drawer-tab-options-list {
 	top: 0;
 	bottom: auto;
 	padding-top: var(--touch-size-l);
@@ -110,12 +110,12 @@ body.osm-row-top.is-phone .workspace-drawer.mod-left .workspace-drawer-tab-optio
 }
 
 /* Views as buttons instead of the drop-down selector. */
-body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-select {
+body.osm-mobile-tabs .workspace-drawer.osm-sidebar .workspace-drawer-tab-select {
 	display: none;
 }
 
-body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list,
-body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options.is-collapsed .workspace-drawer-tab-options-list {
+body.osm-mobile-tabs .workspace-drawer.osm-sidebar .workspace-drawer-tab-options-list,
+body.osm-mobile-tabs .workspace-drawer.osm-sidebar .workspace-drawer-tab-options.is-collapsed .workspace-drawer-tab-options-list {
 	position: static;
 	flex: 0 1 auto;
 	flex-direction: row;
@@ -135,43 +135,43 @@ body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options.is
 	scrollbar-gutter: auto;
 }
 
-body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list::-webkit-scrollbar {
+body.osm-mobile-tabs .workspace-drawer.osm-sidebar .workspace-drawer-tab-options-list::-webkit-scrollbar {
 	display: none;
 }
 
-body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list .workspace-tab-header {
+body.osm-mobile-tabs .workspace-drawer.osm-sidebar .workspace-drawer-tab-options-list .workspace-tab-header {
 	order: 0;
 	flex: none;
 	width: var(--osm-touch-size);
 	animation: none !important;
 }
 
-body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list .workspace-tab-header-inner {
+body.osm-mobile-tabs .workspace-drawer.osm-sidebar .workspace-drawer-tab-options-list .workspace-tab-header-inner {
 	width: 100%;
 	height: var(--osm-touch-size);
 	padding: 0;
 	justify-content: center;
 }
 
-body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list .workspace-tab-header-inner-title {
+body.osm-mobile-tabs .workspace-drawer.osm-sidebar .workspace-drawer-tab-options-list .workspace-tab-header-inner-title {
 	display: none;
 }
 
 /* --- Each view's own action buttons, now behind the actions button --------------------------- */
 
-body.osm-group-actions .workspace-split.mod-left-split .nav-header > .nav-buttons-container,
-body.osm-group-actions .workspace-drawer.mod-left .nav-header > .nav-buttons-container {
+body.osm-group-actions .workspace-split.osm-sidebar .nav-header > .nav-buttons-container,
+body.osm-group-actions .workspace-drawer.osm-sidebar .nav-header > .nav-buttons-container {
 	display: none;
 }
 
 /* A header that held nothing but those buttons. */
-body.osm-group-actions .workspace-split.mod-left-split .nav-header:not(:has(> :not(.nav-buttons-container))),
-body.osm-group-actions .workspace-drawer.mod-left .nav-header:not(:has(> :not(.nav-buttons-container))) {
+body.osm-group-actions .workspace-split.osm-sidebar .nav-header:not(:has(> :not(.nav-buttons-container))),
+body.osm-group-actions .workspace-drawer.osm-sidebar .nav-header:not(:has(> :not(.nav-buttons-container))) {
 	display: none;
 }
 
 /* Phones leave room at the bottom of a view for the floating buttons; they are gone now. */
-body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-content .nav-header ~ div:last-child {
+body.osm-group-actions.is-phone .workspace-drawer.osm-sidebar .workspace-leaf-content .nav-header ~ div:last-child {
 	padding-bottom: var(--size-4-8) !important;
 }
 
@@ -325,6 +325,6 @@ body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-conte
 
 /* --- Mobile: room for the keyboard --------------------------------------------------------- */
 
-.workspace-drawer.mod-left.osm-keyboard-open .workspace-drawer-inner {
+.workspace-drawer.osm-sidebar.osm-keyboard-open .workspace-drawer-inner {
 	padding-bottom: calc(var(--osm-keyboard-inset) + var(--size-4-2)) !important;
 }

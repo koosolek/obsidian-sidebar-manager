@@ -2,9 +2,9 @@ import { App, PluginSettingTab, Setting } from "obsidian";
 import type SidebarManagerPlugin from "./main";
 
 export interface SidebarManagerSettings {
-	/** Mobile: show the left sidebar views as a row of icon buttons instead of the drop-down selector. */
+	/** Mobile: show the sidebar views as a row of icon buttons instead of the drop-down selector. */
 	mobileTabButtons: boolean;
-	/** Mobile: where the button row sits in the left sidebar. */
+	/** Mobile: where the button row sits in the sidebars. */
 	mobileRowPosition: "top" | "bottom";
 	/** Hide each view's action buttons and offer them from the menu button in the tab row. */
 	groupActions: boolean;
@@ -12,8 +12,10 @@ export interface SidebarManagerSettings {
 	vaultInMenu: boolean;
 	/** Offer the settings button in the menu instead of the sidebar footer. */
 	settingsInMenu: boolean;
-	/** Mobile: shrink the left sidebar so the on-screen keyboard doesn't cover it. */
+	/** Mobile: shrink the sidebars so the on-screen keyboard doesn't cover them. */
 	keyboardFix: boolean;
+	/** Give the right sidebar the same tab row, menu and overflow as the left one. */
+	rightSidebar: boolean;
 }
 
 export const DEFAULT_SETTINGS: SidebarManagerSettings = {
@@ -23,6 +25,7 @@ export const DEFAULT_SETTINGS: SidebarManagerSettings = {
 	vaultInMenu: true,
 	settingsInMenu: true,
 	keyboardFix: true,
+	rightSidebar: true,
 };
 
 export class SidebarManagerSettingTab extends PluginSettingTab {
@@ -35,8 +38,13 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
+			.setName("Right sidebar too")
+			.setDesc("Give the right sidebar the same tab row, menu (view actions only) and overflow list as the left one.")
+			.addToggle((t) => t.setValue(this.plugin.settings.rightSidebar).onChange((v) => this.save({ rightSidebar: v })));
+
+		new Setting(containerEl)
 			.setName("Sidebar menu")
-			.setDesc("One button in the left sidebar's tab row opens a menu. Choose what goes in it.")
+			.setDesc("One button in a sidebar's tab row opens a menu. Choose what goes in it.")
 			.setHeading();
 
 		new Setting(containerEl)
@@ -58,7 +66,7 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Sidebar views as buttons")
-			.setDesc("Show the left sidebar views as a row of icon buttons, like on desktop, instead of the drop-down selector.")
+			.setDesc("Show the sidebar views as a row of icon buttons, like on desktop, instead of the drop-down selector.")
 			.addToggle((t) => t.setValue(this.plugin.settings.mobileTabButtons).onChange((v) => this.save({ mobileTabButtons: v })));
 
 		new Setting(containerEl)
@@ -74,7 +82,7 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Keep the sidebar above the keyboard")
-			.setDesc("While the on-screen keyboard is open (for example when searching), shrink the left sidebar so nothing in it is hidden behind the keyboard.")
+			.setDesc("While the on-screen keyboard is open (for example when searching), shrink the sidebars so nothing in them is hidden behind the keyboard.")
 			.addToggle((t) => t.setValue(this.plugin.settings.keyboardFix).onChange((v) => this.save({ keyboardFix: v })));
 	}
 
