@@ -40,26 +40,33 @@
 /* --- Mobile: one row with the views and our buttons ---------------------------------------- */
 
 .workspace-drawer.mod-left .workspace-drawer-tab-options.osm-row {
+	/* Slightly under Obsidian's 44px touch size, so four views and three buttons fit a phone. */
+	--osm-touch-size: 38px;
 	flex-direction: row;
 	align-items: center;
 	gap: var(--size-2-2);
 }
 
 .workspace-drawer.mod-left .workspace-drawer-tab-options.osm-row .workspace-drawer-tab-select {
+	order: 0;
 	flex: 1 1 auto;
 	min-width: 0;
 }
 
 .workspace-drawer.mod-left .osm-controls {
+	order: 1;
+	flex: none;
 	margin-inline-start: auto;
-	gap: var(--size-2-2);
+	gap: var(--size-2-1);
+	padding-inline-start: var(--size-2-3);
+	border-inline-start: var(--border-width) solid var(--background-modifier-border);
 }
 
 .workspace-drawer.mod-left .osm-button {
 	--icon-size: var(--icon-l);
 	--icon-stroke: var(--icon-l-stroke-width);
-	width: var(--touch-size-m);
-	height: var(--touch-size-m);
+	width: var(--osm-touch-size);
+	height: var(--osm-touch-size);
 	padding: 0;
 	display: flex;
 	align-items: center;
@@ -75,6 +82,15 @@ body.osm-row-bottom .workspace-drawer.mod-left .workspace-drawer-tab-options {
 	order: 2;
 }
 
+/* Phones open the selector's list upwards from the bottom; at the top it has to open downwards. */
+body.osm-row-top.is-phone .workspace-drawer.mod-left .workspace-drawer-tab-options-list {
+	top: 0;
+	bottom: auto;
+	padding-top: var(--touch-size-l);
+	padding-bottom: var(--size-4-2);
+	box-shadow: 0 12px 12px 0 var(--mobile-sidebar-background);
+}
+
 /* Views as buttons instead of the drop-down selector. */
 body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-select {
 	display: none;
@@ -86,7 +102,7 @@ body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options.is
 	flex: 1 1 auto;
 	flex-direction: row;
 	align-items: center;
-	gap: var(--size-2-2);
+	gap: var(--size-2-1);
 	min-width: 0;
 	max-height: none;
 	padding: 0;
@@ -98,21 +114,24 @@ body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options.is
 	box-shadow: none;
 	transition: none;
 	scrollbar-width: none;
+	scrollbar-gutter: auto;
 }
 
 body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list::-webkit-scrollbar {
 	display: none;
 }
 
+/* Buttons give up some width before the row has to scroll. */
 body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list .workspace-tab-header {
 	order: 0;
-	flex: 0 0 auto;
+	flex: 0 1 var(--osm-touch-size);
+	min-width: 30px;
 	animation: none !important;
 }
 
 body.osm-mobile-tabs .workspace-drawer.mod-left .workspace-drawer-tab-options-list .workspace-tab-header-inner {
-	width: var(--touch-size-m);
-	height: var(--touch-size-m);
+	width: 100%;
+	height: var(--osm-touch-size);
 	padding: 0;
 	justify-content: center;
 }
@@ -209,4 +228,10 @@ body.osm-group-actions.is-phone .workspace-drawer.mod-left .workspace-leaf-conte
 
 .workspace-drawer.mod-left.osm-keyboard-open .workspace-drawer-inner {
 	padding-bottom: calc(var(--osm-keyboard-inset) + var(--size-4-2)) !important;
+}
+
+/* Invisible but still laid out, while a menu opened from one of its buttons is showing. */
+.osm-popover.is-parked {
+	visibility: hidden;
+	pointer-events: none;
 }

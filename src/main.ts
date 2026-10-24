@@ -1,7 +1,7 @@
-import { debounce, Platform, Plugin, setIcon, setTooltip, WorkspaceLeaf } from "obsidian";
+import { debounce, Menu, Notice, Platform, Plugin, setIcon, setTooltip, WorkspaceLeaf } from "obsidian";
 import { ActionsPopover, navButtonsOf } from "./actions-popover";
 import { KeyboardInset } from "./keyboard";
-import { asMobileDrawer, MobileDrawer, openSettings, tabGroupsIn } from "./obsidian-internals";
+import { asMobileDrawer, desktopVaults, MobileDrawer, openSettings, openVaultChooser, tabGroupsIn } from "./obsidian-internals";
 import { DEFAULT_SETTINGS, SidebarManagerSettings, SidebarManagerSettingTab } from "./settings";
 
 /** A row of view tabs in the left sidebar that gets our buttons. */
@@ -209,15 +209,28 @@ export default class SidebarManagerPlugin extends Plugin {
 			return;
 		}
 
-		// Desktop: hand the click to Obsidian's own vault switcher, which builds the vault menu.
+		// Desktop: the same menu Obsidian's footer switcher builds. Its own switcher can't be
+		// reused while hidden: Obsidian closes a menu as soon as the element it belongs to is hidden.
 		b.addEventListener("click", (e) => {
 			e.preventDefault();
-			const native = this.desktopVaultSwitcher();
-			if (!native) return;
+			if (b.hasClass("has-active-menu")) return;
+			const vaults = desktopVaults();
+			if (!vaults) return;
+			const menu = new Menu();
+			for (const v of vaults.list) {
+				menu.addItem((item) =>
+					item
+						.setTitle(v.name)
+						.setChecked(v.path === vaults.current)
+						.onClick(() => {
+							if (v.path !== vaults.current && !vaults.open(v.path)) new Notice("Failed to open vault");
+						})
+				);
+			}
+			menu.addSeparator();
+			menu.addItem((item) => item.setTitle("Manage vaults…").setIcon("open-vault").onClick(() => openVaultChooser(this.app)));
 			const r = b.getBoundingClientRect();
-			native.dispatchEvent(
-				new MouseEvent("click", { bubbles: true, cancelable: true, clientX: r.left, clientY: r.bottom, view: window })
-			);
+			menu.setParentElement(b).showAtPosition({ x: r.left, y: r.bottom + 4 });
 		});
 	}
 
@@ -226,12 +239,6 @@ export default class SidebarManagerPlugin extends Plugin {
 		const { el, parent, next } = this.borrowedSelect;
 		if (parent.isConnected) parent.insertBefore(el, next && next.parentNode === parent ? next : null);
 		this.borrowedSelect = null;
-	}
-
-	private desktopVaultSwitcher(): HTMLElement | null {
-		return this.leftSplitEl().querySelector<HTMLElement>(
-			".workspace-sidedock-vault-profile .workspace-drawer-vault-switcher"
-		);
 	}
 
 	/** Hides the native buttons ours stand in for. */

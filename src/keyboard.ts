@@ -82,8 +82,10 @@ export class KeyboardInset {
 		if (!drawer) return;
 		// Padding doesn't move the drawer's box, so measuring with our inset applied is fine.
 		const inner = drawer.querySelector<HTMLElement>(".workspace-drawer-inner");
-		if (!inner || !drawer.isShown()) return this.apply(0);
-		const covered = inner.getBoundingClientRect().bottom - this.visibleBottom();
+		// Not isShown(): the drawer is position: fixed, so it never has an offsetParent.
+		const rect = inner?.getBoundingClientRect();
+		if (!rect || rect.width === 0) return this.apply(0);
+		const covered = rect.bottom - this.visibleBottom();
 		this.apply(covered > 1 ? Math.round(covered) : 0);
 	}
 

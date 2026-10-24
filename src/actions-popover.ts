@@ -42,13 +42,24 @@ export class ActionsPopover {
 		}
 		this.position();
 
-		// A button press closes the drop-down after Obsidian has handled it (some buttons open
-		// their own menu, which is positioned from the button while it is still visible).
+		// A button press closes the drop-down once Obsidian has handled it. Buttons that open a
+		// menu of their own (sort order) need their button to stay laid out, or Obsidian closes the
+		// menu again; so the drop-down is only made invisible until that menu is gone.
 		const onClick = (e: MouseEvent) => {
-			if ((e.target as HTMLElement).closest(".clickable-icon")) window.setTimeout(() => this.close(), 0);
+			if (!(e.target as HTMLElement).closest(".clickable-icon")) return;
+			window.setTimeout(() => {
+				if (!popoverEl.querySelector(".has-active-menu")) return this.close();
+				popoverEl.addClass("is-parked");
+				const watcher = new MutationObserver(() => {
+					if (!popoverEl.querySelector(".has-active-menu")) this.close();
+				});
+				watcher.observe(popoverEl, { subtree: true, attributes: true, attributeFilter: ["class"] });
+				this.cleanups.push(() => watcher.disconnect());
+			}, 0);
 		};
 		const onOutside = (e: PointerEvent) => {
 			const t = e.target as Node;
+			if (popoverEl.hasClass("is-parked")) return;
 			if (!popoverEl.contains(t) && !anchorEl.contains(t)) this.close();
 		};
 		const onKey = (e: KeyboardEvent) => {
