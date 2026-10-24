@@ -119,7 +119,9 @@ export default class SidebarManagerPlugin extends Plugin {
 		const current = readLayout(this.app);
 		const rearranged = this.desktopLayout !== null && !sameLayout(current, this.desktopLayout);
 		this.desktopLayout = current;
-		if ((rearranged || this.settings.layout === null) && !sameLayout(current, this.settings.layout)) {
+		// Also when nothing is recorded yet, or only by a version that didn't record closed views.
+		const outdated = this.settings.layout === null || this.settings.layout.closed === undefined;
+		if ((rearranged || outdated) && !sameLayout(current, this.settings.layout)) {
 			this.settings.layout = current;
 			await this.saveData(this.settings);
 			this.settingTab?.update();

@@ -11,12 +11,17 @@ import { asMobileDrawer, MobileDrawer, tabGroupsIn } from "./obsidian-internals"
 export interface SidebarLayout {
 	left: string[];
 	right: string[];
+	/**
+	 * Sidebar view types the desktop has but keeps closed (e.g. a plugin's view the user closed).
+	 * Mobile closes them too. Views the desktop doesn't know at all (a mobile-only plugin) stay.
+	 */
+	closed?: string[];
 }
 
 export function isSidebarLayout(value: unknown): value is SidebarLayout {
 	const v = value as Partial<SidebarLayout> | null;
 	const isList = (x: unknown) => Array.isArray(x) && x.every((t) => typeof t === "string");
-	return !!v && isList(v.left) && isList(v.right);
+	return !!v && isList(v.left) && isList(v.right) && (v.closed === undefined || isList(v.closed));
 }
 
 export function sameLayout(a: SidebarLayout | null, b: SidebarLayout | null): boolean {
@@ -34,21 +39,50 @@ function leavesIn(split: unknown): WorkspaceLeaf[] {
 	return tabGroupsIn(split).flatMap((g) => g.children);
 }
 
-/** The current arrangement of this device's sidebars. */
+/** Views that open files or fill the main area: never treated as sidebar views. */
+const MAIN_AREA_TYPES = new Set(["empty", "graph", "release-notes", "webviewer"]);
+
+interface ViewRegistry {
+	viewByType?: Record<string, unknown>;
+	typeByExtension?: Record<string, string>;
+}
+
+/** The current arrangement of this device's sidebars, and the sidebar views it keeps closed. */
 export function readLayout(app: App): SidebarLayout {
 	const types = (split: unknown) => leavesIn(split).map(viewTypeOf).filter((t) => t && t !== "empty");
-	return { left: types(app.workspace.leftSplit), right: types(app.workspace.rightSplit) };
+	const left = types(app.workspace.leftSplit);
+	const right = types(app.workspace.rightSplit);
+	const registry = (app as unknown as { viewRegistry?: ViewRegistry }).viewRegistry;
+	const fileViews = new Set(Object.values(registry?.typeByExtension ?? {}));
+	const open = new Set([...left, ...right]);
+	const closed = Object.keys(registry?.viewByType ?? {}).filter(
+		(t) => !open.has(t) && !fileViews.has(t) && !MAIN_AREA_TYPES.has(t)
+	);
+	return { left, right, closed };
 }
 
 /**
- * Mobile: moves and reorders the sidebar views to match `layout`. Views it doesn't mention stay in
- * their sidebar, after the ones it does; views it mentions that this device doesn't have are
- * skipped. Views are moved, not recreated, so they keep their state. Returns whether anything moved.
+ * Mobile: closes the views the desktop keeps closed, then moves and reorders the sidebar views to
+ * match `layout`. Views it doesn't mention stay in their sidebar, after the ones it does; views it
+ * mentions that this device doesn't have are skipped. Views are moved, not recreated, so they keep
+ * their state. Returns whether anything changed.
  */
 export function applyLayout(app: App, layout: SidebarLayout): boolean {
 	const left = asMobileDrawer(app.workspace.leftSplit);
 	const right = asMobileDrawer(app.workspace.rightSplit);
 	if (!left || !right) return false;
+
+	// Close what the desktop keeps closed (never a sidebar's last view).
+	let changed = false;
+	const closed = new Set(layout.closed ?? []);
+	for (const drawer of [left, right]) {
+		for (const leaf of [...drawer.children]) {
+			if (closed.has(viewTypeOf(leaf)) && drawer.children.length > 1) {
+				leaf.detach();
+				changed = true;
+			}
+		}
+	}
 
 	const available = [...left.children, ...right.children];
 	const claimed = new Set<WorkspaceLeaf>();
@@ -66,9 +100,9 @@ export function applyLayout(app: App, layout: SidebarLayout): boolean {
 		[right, [...wantedRight, ...right.children.filter((l) => !claimed.has(l))]],
 	];
 	// A sidebar is never emptied: Obsidian doesn't expect an empty drawer.
-	if (targets.some(([, leaves]) => leaves.length === 0)) return false;
+	if (targets.some(([, leaves]) => leaves.length === 0)) return changed;
 
-	let moved = false;
+	let moved = changed;
 	for (const [drawer, leaves] of targets) {
 		leaves.forEach((leaf, index) => {
 			if (drawer.children[index] === leaf) return;

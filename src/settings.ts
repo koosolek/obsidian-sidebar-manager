@@ -138,7 +138,7 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 							.setIcon(side === "left" ? "lucide-arrow-right" : "lucide-arrow-left")
 							.setTooltip(`Move to the ${other} sidebar`)
 							.onClick(() => {
-								const next = { left: [...layout.left], right: [...layout.right] };
+								const next = { ...layout, left: [...layout.left], right: [...layout.right] };
 								next[side].splice(index, 1);
 								next[other].push(type);
 								void save(next);
@@ -152,7 +152,7 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 				visible,
 				emptyState: "No views",
 				onReorder: (from: number, to: number) => {
-					const next = { left: [...layout.left], right: [...layout.right] };
+					const next = { ...layout, left: [...layout.left], right: [...layout.right] };
 					const [moved] = next[side].splice(from, 1);
 					next[side].splice(to, 0, moved);
 					void save(next);
