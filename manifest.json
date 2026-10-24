@@ -1,7 +1,7 @@
 {
 	"id": "sidebar-manager",
 	"name": "Sidebar Manager",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"minAppVersion": "1.14.0",
 	"description": "Reorganize the sidebars: view buttons on mobile, one menu for each view's actions, the vault switcher and settings, a list for views that don't fit, and search that stays above the keyboard.",
 	"author": "Mihkel Ronk",
