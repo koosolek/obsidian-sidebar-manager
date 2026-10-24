@@ -304,7 +304,7 @@ export default class SidebarManagerPlugin extends Plugin {
 		return (s.groupActions && !!navButtonsOf(host.activeLeaf())) || (host.primary && s.vaultAndSettings === "menu");
 	}
 
-	/** Sections: the view's actions; the vaults; "Manage vaults…" and settings. */
+	/** Sections: the view's actions; the vault submenu; settings. */
 	private renderMenu(host: Host, d: DropdownContent) {
 		const s = this.settings;
 		if (s.groupActions) {
@@ -313,7 +313,8 @@ export default class SidebarManagerPlugin extends Plugin {
 		}
 		if (!host.primary) return;
 		if (s.vaultAndSettings === "menu") {
-			// The vaults sit one level down, so a stray tap can't switch vaults.
+			// The vaults sit one level down, so a stray tap can't switch vaults. "Manage vaults…" is
+			// in that submenu too, as in Obsidian's own vault menu.
 			d.section();
 			d.item({
 				icon: "vault",
@@ -321,7 +322,6 @@ export default class SidebarManagerPlugin extends Plugin {
 				submenu: true,
 				onClick: (itemEl) => this.showVaultMenu(itemEl),
 			});
-			d.item({ icon: "open-vault", label: "Manage vaults…", onClick: () => openVaultChooser(this.app) });
 			d.section();
 			d.item({ icon: "lucide-settings", label: "Settings", onClick: () => openSettings(this.app) });
 		}
@@ -329,7 +329,8 @@ export default class SidebarManagerPlugin extends Plugin {
 
 	/** Obsidian's own menu: beside the item on desktop, a sheet from the bottom on phones. */
 	/**
-	 * Phones: Obsidian's menu as a sheet, listing the vaults from Obsidian's own vault picker.
+	 * Mobile: Obsidian's menu (a sheet on phones), listing the vaults from Obsidian's own vault
+	 * picker, then "Manage vaults…" like the desktop menu.
 	 * Desktop: Obsidian's own vault menu, opened from the (hidden) sidebar footer's vault switcher
 	 * and moved beside the item.
 	 */
@@ -339,6 +340,8 @@ export default class SidebarManagerPlugin extends Plugin {
 			for (const v of this.mobileVaults()) {
 				menu.addItem((i) => i.setTitle(v.name).setIcon("vault").setChecked(v.current).onClick(() => v.open()));
 			}
+			menu.addSeparator();
+			menu.addItem((i) => i.setTitle("Manage vaults…").setIcon("open-vault").onClick(() => openVaultChooser(this.app)));
 			menu.setParentElement(itemEl).showAtPosition(submenuPoint(itemEl), itemEl.doc);
 			return;
 		}
