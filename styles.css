@@ -192,6 +192,21 @@ body.osm-group-actions .osm-sidebar .workspace-leaf-content.osm-grouped-view .na
 	padding-top: var(--size-4-3);
 }
 
+/* A view's search filter (Bookmarks, Tags, Backlinks…) sits exactly where the Search view's search
+   field does: same gaps above, at the sides and below. With the buttons in the menu, the header
+   only shows when it holds that filter. */
+body.osm-group-actions .osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header:not(.osm-empty-nav-header) {
+	padding: var(--size-4-3) var(--size-4-3) var(--size-4-2);
+}
+
+body.osm-group-actions .osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header:not(.osm-empty-nav-header) > .search-input-container {
+	margin: 0;
+}
+
+body.osm-group-actions.is-mobile .osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header:not(.osm-empty-nav-header) > .search-input-container {
+	margin: var(--size-4-1) var(--size-4-1) 0;
+}
+
 /* Phones leave room at the bottom of a view for the floating buttons; they are gone now. */
 body.osm-group-actions.is-phone .workspace-drawer.osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header ~ div:last-child {
 	padding-bottom: var(--size-4-8);
