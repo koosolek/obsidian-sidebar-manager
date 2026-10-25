@@ -1,5 +1,6 @@
 import { debounce, Menu, Platform, Plugin, setIcon, setTooltip, WorkspaceLeaf } from "obsidian";
 import { Dropdown, DropdownContent, hasGroupedActions, navButtonsOf, placeBeside, submenuPoint, withInAppMenus } from "./dropdown";
+import { FilesFilterExpander } from "./files-filter";
 import { KeyboardInset } from "./keyboard";
 import {
 	asMobileDrawer,
@@ -55,6 +56,8 @@ export default class SidebarManagerPlugin extends Plugin {
 	private hidden = new Set<HTMLElement>();
 	/** Views marked `osm-grouped-view`, whose header buttons go in the menu. */
 	private groupedViews = new Set<HTMLElement>();
+	/** Opens the folders holding matches while the Files filter has a query. */
+	private filesExpander = new FilesFilterExpander();
 	/** Files' filter, whose button we un-hid (keyed by that button); hidden again on unload. */
 	private shownFilters = new Map<HTMLElement, ViewFilter>();
 	/** Whether each sidebar view's search filter was showing at the last refresh. */
@@ -84,6 +87,8 @@ export default class SidebarManagerPlugin extends Plugin {
 			this.registerEvent(this.app.workspace.on("layout-change", this.requestRefresh));
 			this.registerEvent(this.app.workspace.on("layout-change", this.requestRecordLayout));
 			this.registerEvent(this.app.workspace.on("active-leaf-change", this.requestRefresh));
+			// Folders the Files filter opened aren't saved as open.
+			this.registerEvent(this.app.workspace.on("quit", () => this.filesExpander.closeAll()));
 			// Sidebar views load lazily; catch the nav buttons they add after the first pass.
 			this.registerInterval(window.setInterval(() => this.refresh(), 2000));
 		});
@@ -218,6 +223,7 @@ export default class SidebarManagerPlugin extends Plugin {
 			delete input.dataset.osmPlaceholder;
 		}
 		this.filterInputs.clear();
+		this.filesExpander.detach();
 		for (const button of this.shownFilters.keys()) button.hide();
 		this.shownFilters.clear();
 		this.filterStates = new WeakMap();
@@ -300,6 +306,10 @@ export default class SidebarManagerPlugin extends Plugin {
 
 	/** Files: shows the search filter button Obsidian builds but hides. */
 	private showFilesFilter(hosts: Host[]) {
+		const files = this.settings.filesFilter
+			? hosts.flatMap((h) => h.leaves()).find((l) => viewTypeOf(l) === "file-explorer")
+			: undefined;
+		this.filesExpander.attach(files ?? null);
 		for (const leaf of hosts.flatMap((h) => h.leaves())) {
 			if (viewTypeOf(leaf) !== "file-explorer") continue;
 			const filter = filterOf(leaf);
