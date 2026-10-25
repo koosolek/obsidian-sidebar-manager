@@ -377,13 +377,28 @@ export default class SidebarManagerPlugin extends Plugin {
 			.map((leaf) => filterOf(leaf))
 			.filter((f): f is ViewFilter => !!f && f.buttonEl.style.display !== "none");
 		if (this.settings.filterToggle === "all") {
-			// The one that changed since last time sets the state for all of them.
-			const changed = filters.find((f) => this.filterStates.has(f.buttonEl) && this.filterStates.get(f.buttonEl) !== f.isShowing());
-			if (changed) {
-				const on = changed.isShowing();
+			const known = filters.filter((f) => this.filterStates.has(f.buttonEl));
+			// The one that changed since last time sets the state for all of them. Otherwise, views
+			// not seen before (at startup, a view that loads later, Files' filter being added) take
+			// the state the others have; at startup, shown if any is shown.
+			const changed = known.find((f) => this.filterStates.get(f.buttonEl) !== f.isShowing());
+			const on = changed
+				? changed.isShowing()
+				: known.length > 0
+					? known.some((f) => f.isShowing())
+					: filters.some((f) => f.isShowing());
+			const toToggle = (changed ? filters : filters.filter((f) => !this.filterStates.has(f.buttonEl))).filter(
+				(f) => f.isShowing() !== on
+			);
+			if (toToggle.length > 0) {
 				const focused = activeDocument.activeElement;
-				for (const f of filters) if (f.isShowing() !== on) f.buttonEl.click();
-				if (focused instanceof HTMLElement && focused !== activeDocument.activeElement) focused.focus();
+				for (const f of toToggle) f.buttonEl.click();
+				// The buttons focus their field: put the focus back (or nowhere, if it was nowhere).
+				const now = activeDocument.activeElement;
+				if (now !== focused) {
+					if (focused instanceof HTMLElement && focused !== activeDocument.body) focused.focus();
+					else if (now instanceof HTMLElement) now.blur();
+				}
 			}
 		}
 		for (const f of filters) this.filterStates.set(f.buttonEl, f.isShowing());
