@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-sidebar-manager",
-	"version": "0.2.6",
+	"version": "0.3.0",
 	"description": "Obsidian plugin that tidies the left sidebar: tab buttons on mobile, actions under one menu, vault switcher and settings in the tab row, and a sidebar that stays above the keyboard.",
 	"main": "main.js",
 	"private": true,
