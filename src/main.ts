@@ -184,7 +184,8 @@ export default class SidebarManagerPlugin extends Plugin {
 	 * mobile only the views this device has, including ones the recording doesn't mention.
 	 */
 	layoutForEditing(): SidebarLayout {
-		const recorded = this.settings.layout ?? readLayout(this.app);
+		// With sync off, the list shows (and edits) just this device's arrangement.
+		const recorded = (this.settings.syncLayout ? this.settings.layout : null) ?? readLayout(this.app);
 		if (!Platform.isMobile) return recorded;
 		const own = readLayout(this.app);
 		const ownTypes = [...own.left, ...own.right];
@@ -205,6 +206,11 @@ export default class SidebarManagerPlugin extends Plugin {
 
 	/** Saves an arrangement edited in the settings, and applies it on mobile. */
 	async setLayout(layout: SidebarLayout) {
+		if (!this.settings.syncLayout) {
+			// Sync off: arrange just this device (Obsidian saves its layout); share nothing.
+			if (Platform.isMobile && applyLayout(this.app, layout)) this.requestRefresh();
+			return;
+		}
 		this.settings.layout = layout;
 		await this.saveLayoutState();
 		this.followLayout();

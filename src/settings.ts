@@ -183,7 +183,7 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 								heading.after(
 									createDiv({
 										cls: "setting-item-description osm-layout-explainer",
-										text: "Drag to change the order. Views above the line are in the left sidebar, views below it in the right one.",
+										text: "Drag to change the order. Views above the line are in the left sidebar, views below it in the right one. With sync off, this only changes this device.",
 									})
 								);
 							}
@@ -196,7 +196,8 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 				type: "list",
 				heading: "Arranging the views",
 				cls: "osm-layout-list",
-				visible: () => Platform.isMobile && this.plugin.settings.syncLayout,
+				// Arranging works without sync too (then just on this device).
+				visible: () => Platform.isMobile,
 				onReorder: (from: number, to: number) => {
 					const next = [...entries];
 					const [moved] = next.splice(from, 1);
@@ -227,7 +228,8 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 		if (key === "syncLayout" && value === true && !this.plugin.settings.syncLayout) this.plugin.takeOwnLayout();
 		Object.assign(this.plugin.settings, { [key]: value });
 		await this.plugin.saveSettings();
-		// Show or hide what depends on it (the layout lists).
-		this.refreshDomState();
+		// The arrange list shows the shared arrangement with sync on, this device's with it off.
+		if (key === "syncLayout") this.update();
+		else this.refreshDomState();
 	}
 }
