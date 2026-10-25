@@ -135,7 +135,7 @@ export default class SidebarManagerPlugin extends Plugin {
 		if (sameLayout(current, this.settings.desktopLayout)) return;
 		this.settings.desktopLayout = current;
 		this.settings.layout = current;
-		await this.saveData(this.settings);
+		await this.saveLayoutState();
 		this.settingTab?.update();
 	}
 
@@ -155,8 +155,28 @@ export default class SidebarManagerPlugin extends Plugin {
 		if (this.settings.desktopLayout === null || sameLayout(layout, this.settings.desktopLayout)) return;
 		const moved = applyDesktopLayout(this.app, layout);
 		this.settings.desktopLayout = readLayout(this.app);
-		void this.saveData(this.settings);
+		void this.saveLayoutState();
 		if (moved) this.requestRefresh();
+	}
+
+	/**
+	 * Saves just the sidebar order on top of the settings file as it is on disk. These saves happen
+	 * on their own (not because the user changed a setting here), and data.json syncs between
+	 * devices: writing this device's whole, possibly outdated copy would undo settings just changed
+	 * on another device (e.g. the sync toggle).
+	 */
+	private async saveLayoutState() {
+		const onDisk = ((await this.loadData()) as Record<string, unknown> | null) ?? {};
+		await this.saveData({ ...onDisk, layout: this.settings.layout, desktopLayout: this.settings.desktopLayout });
+	}
+
+	/**
+	 * Sync was just turned on, on this device: its arrangement becomes the one all devices use.
+	 */
+	takeOwnLayout() {
+		const own = readLayout(this.app);
+		this.settings.layout = own;
+		if (!Platform.isMobile) this.settings.desktopLayout = own;
 	}
 
 	/**
@@ -186,7 +206,7 @@ export default class SidebarManagerPlugin extends Plugin {
 	/** Saves an arrangement edited in the settings, and applies it on mobile. */
 	async setLayout(layout: SidebarLayout) {
 		this.settings.layout = layout;
-		await this.saveData(this.settings);
+		await this.saveLayoutState();
 		this.followLayout();
 	}
 

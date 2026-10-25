@@ -125,10 +125,19 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 				items: [
 					{
 						name: "Sync between desktop and mobile",
-						desc: Platform.isMobile
-							? "Keep which views sit in which sidebar, and their order, the same on desktop and mobile. Arrange them by dragging in the sidebars on desktop, or in the list below: views above the line are in the left sidebar, views below it in the right one."
-							: "Keep which views sit in which sidebar, and their order, the same on desktop and mobile. Arrange them by dragging in the sidebars here; on mobile, in these settings.",
+						desc: "Keep the same views in each sidebar, in the same order, on desktop and on mobile: arranging them on one updates the other. When you turn sync on, the arrangement of the device you turn it on from is used everywhere.",
 						control: { type: "toggle", key: "syncLayout", defaultValue: DEFAULT_SETTINGS.syncLayout },
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: "Arranging the views",
+				visible: () => !Platform.isMobile,
+				items: [
+					{
+						name: "Drag them in the sidebars",
+						desc: "Drag a view's icon along a sidebar's tab row to change the order, or onto the other sidebar's tab row to move it there. With sync on, phones and tablets follow.",
 					},
 				],
 			},
@@ -168,6 +177,16 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 						searchable: false,
 						render: (setting) => {
 							setting.settingEl.addClass("osm-layout-divider");
+							// A list's heading has no description of its own: add the explainer under it.
+							const heading = setting.settingEl.closest(".osm-layout-list")?.querySelector(":scope > .setting-item-heading");
+							if (heading && !heading.nextElementSibling?.hasClass("osm-layout-explainer")) {
+								heading.after(
+									createDiv({
+										cls: "setting-item-description osm-layout-explainer",
+										text: "Drag to change the order. Views above the line are in the left sidebar, views below it in the right one.",
+									})
+								);
+							}
 						},
 					}
 				: { name: this.viewName(type), render: () => {} }
@@ -175,6 +194,8 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 		return [
 			{
 				type: "list",
+				heading: "Arranging the views",
+				cls: "osm-layout-list",
 				visible: () => Platform.isMobile && this.plugin.settings.syncLayout,
 				onReorder: (from: number, to: number) => {
 					const next = [...entries];
@@ -202,6 +223,8 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 	}
 
 	async setControlValue(key: string, value: unknown): Promise<void> {
+		// Turning sync on here: this device's arrangement wins.
+		if (key === "syncLayout" && value === true && !this.plugin.settings.syncLayout) this.plugin.takeOwnLayout();
 		Object.assign(this.plugin.settings, { [key]: value });
 		await this.plugin.saveSettings();
 		// Show or hide what depends on it (the layout lists).

@@ -457,3 +457,9 @@ body.osm-group-actions.is-phone .workspace-drawer.osm-sidebar .workspace-leaf-co
 	border-radius: 1px;
 	background-color: var(--text-faint);
 }
+
+/* The explainer under the mobile list's heading (lined up with the heading's text). */
+.osm-layout-explainer {
+	margin-top: calc(var(--size-4-2) * -1);
+	padding: 0 var(--size-4-4) var(--size-4-3);
+}
