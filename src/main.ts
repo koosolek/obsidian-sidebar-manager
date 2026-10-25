@@ -5,11 +5,13 @@ import {
 	asMobileDrawer,
 	MobileDrawer,
 	openSettings,
+	filterOf,
 	openVaultChooser,
 	tabGroupsIn,
+	ViewFilter,
 	tabHeaderOf,
 } from "./obsidian-internals";
-import { applyLayout, isSidebarLayout, readLayout, sameLayout, SidebarLayout } from "./layout";
+import { applyLayout, isSidebarLayout, readLayout, sameLayout, SidebarLayout, viewTypeOf } from "./layout";
 import { DEFAULT_SETTINGS, SidebarManagerSettings, SidebarManagerSettingTab } from "./settings";
 
 /** A row of view tabs in the left sidebar that gets our buttons. */
@@ -53,6 +55,10 @@ export default class SidebarManagerPlugin extends Plugin {
 	private hidden = new Set<HTMLElement>();
 	/** Views marked `osm-grouped-view`, whose header buttons go in the menu. */
 	private groupedViews = new Set<HTMLElement>();
+	/** Files' filter, whose button we un-hid (keyed by that button); hidden again on unload. */
+	private shownFilters = new Map<HTMLElement, ViewFilter>();
+	/** Whether each sidebar view's search filter was showing at the last refresh. */
+	private filterStates = new WeakMap<HTMLElement, boolean>();
 	/** View filter fields whose placeholder we changed (original kept in data-osm-placeholder). */
 	private filterInputs = new Set<HTMLInputElement>();
 	/** View headers we've marked `osm-empty-nav-header`. */
@@ -84,6 +90,8 @@ export default class SidebarManagerPlugin extends Plugin {
 	}
 
 	onunload() {
+		// Without its button, an open Files filter couldn't be closed any more.
+		for (const filter of this.shownFilters.values()) if (filter.isShowing()) filter.buttonEl.click();
 		this.teardown();
 	}
 
@@ -210,6 +218,9 @@ export default class SidebarManagerPlugin extends Plugin {
 			delete input.dataset.osmPlaceholder;
 		}
 		this.filterInputs.clear();
+		for (const button of this.shownFilters.keys()) button.hide();
+		this.shownFilters.clear();
+		this.filterStates = new WeakMap();
 		this.emptyHeaders.clear();
 		this.marked.clear();
 		document.body.removeClass(...BODY_CLASSES);
@@ -251,6 +262,8 @@ export default class SidebarManagerPlugin extends Plugin {
 		}
 
 		this.hideReplacedNatives();
+		this.showFilesFilter(hosts);
+		this.syncFilters(hosts);
 		if (!this.dropdown.isOpen) this.markGroupedViews(hosts);
 	}
 
@@ -283,6 +296,47 @@ export default class SidebarManagerPlugin extends Plugin {
 				this.filterInputs.add(input);
 			}
 		}
+	}
+
+	/** Files: shows the search filter button Obsidian builds but hides. */
+	private showFilesFilter(hosts: Host[]) {
+		for (const leaf of hosts.flatMap((h) => h.leaves())) {
+			if (viewTypeOf(leaf) !== "file-explorer") continue;
+			const filter = filterOf(leaf);
+			if (!filter) continue;
+			// Switched off (or never on): no button, so no field left open that can't be closed.
+			if (!this.settings.filesFilter) {
+				if (filter.isShowing()) filter.buttonEl.click();
+				continue;
+			}
+			if (this.shownFilters.has(filter.buttonEl)) continue;
+			filter.buttonEl.show();
+			this.shownFilters.set(filter.buttonEl, filter);
+		}
+	}
+
+	/**
+	 * "All views together": when the search filter is shown or hidden in one sidebar view, the
+	 * same happens in the others. Runs on every refresh, which follows any change soon enough
+	 * (closing the menu, the interval). The views only offer their own button to toggle it, which
+	 * also focuses the field, so the focus is put back where it was.
+	 */
+	private syncFilters(hosts: Host[]) {
+		const filters = hosts
+			.flatMap((h) => h.leaves())
+			.map((leaf) => filterOf(leaf))
+			.filter((f): f is ViewFilter => !!f && f.buttonEl.style.display !== "none");
+		if (this.settings.filterToggle === "all") {
+			// The one that changed since last time sets the state for all of them.
+			const changed = filters.find((f) => this.filterStates.has(f.buttonEl) && this.filterStates.get(f.buttonEl) !== f.isShowing());
+			if (changed) {
+				const on = changed.isShowing();
+				const focused = activeDocument.activeElement;
+				for (const f of filters) if (f.isShowing() !== on) f.buttonEl.click();
+				if (focused instanceof HTMLElement && focused !== activeDocument.activeElement) focused.focus();
+			}
+		}
+		for (const f of filters) this.filterStates.set(f.buttonEl, f.isShowing());
 	}
 
 	/** The sidebars this plugin manages, per the "Apply to" setting. */

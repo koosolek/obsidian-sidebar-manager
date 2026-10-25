@@ -65,3 +65,26 @@ export function openSettings(app: App) {
 export function openVaultChooser(app: App) {
 	(app as unknown as { openVaultChooser?: () => void }).openVaultChooser?.();
 }
+
+/**
+ * A sidebar view's search filter (Bookmarks, Tags, Backlinks, All properties, Outline, and Files,
+ * where Obsidian builds it but hides its button): a magnifier button in the view's header that
+ * shows or hides a filter field there. The views implement it differently, so it's read from the
+ * page: the button, and whether the field is showing.
+ */
+export interface ViewFilter {
+	buttonEl: HTMLElement;
+	isShowing(): boolean;
+}
+
+export function filterOf(leaf: WorkspaceLeaf | undefined): ViewFilter | null {
+	const root = leaf?.view?.containerEl;
+	const header = root?.querySelector<HTMLElement>(".nav-header");
+	if (!header) return null;
+	const buttonEl = Array.from(header.querySelectorAll<HTMLElement>(".nav-buttons-container .clickable-icon")).find((b) =>
+		b.querySelector("svg.lucide-search")
+	);
+	const field = header.querySelector<HTMLElement>(":scope > .search-input-container");
+	if (!buttonEl || !field) return null;
+	return { buttonEl, isShowing: () => field.style.display !== "none" };
+}

@@ -17,6 +17,10 @@ export interface SidebarManagerSettings {
 	mobileRowPosition: "top" | "bottom";
 	/** Which sidebars get all this. */
 	sidebars: Sidebars;
+	/** Show the Files view's search filter (Obsidian builds it but hides its button). */
+	filesFilter: boolean;
+	/** Toggling a view's search filter toggles it in every sidebar view, or just in that one. */
+	filterToggle: "each" | "all";
 	/** Mobile sidebars follow the arrangement made on the desktop. */
 	syncLayout: boolean;
 	/** The recorded sidebar arrangement (view types per sidebar, in order) that mobile follows. */
@@ -32,6 +36,8 @@ export const DEFAULT_SETTINGS: SidebarManagerSettings = {
 	keyboardFix: true,
 	mobileRowPosition: "top",
 	sidebars: "both",
+	filesFilter: true,
+	filterToggle: "all",
 	syncLayout: true,
 	layout: null,
 	desktopLayout: null,
@@ -62,6 +68,27 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 							key: "vaultAndSettings",
 							options: { menu: "In the menu", default: "Obsidian default" },
 							defaultValue: DEFAULT_SETTINGS.vaultAndSettings,
+						},
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: "Search filters",
+				items: [
+					{
+						name: "Filter in Files",
+						desc: "Add a search filter to the Files view, like Bookmarks and Tags have. (Obsidian already has it, but hides its button.)",
+						control: { type: "toggle", key: "filesFilter", defaultValue: DEFAULT_SETTINGS.filesFilter },
+					},
+					{
+						name: "Show and hide filters",
+						desc: "Showing or hiding the search filter in one sidebar view does the same in all of them, or only in that view.",
+						control: {
+							type: "dropdown",
+							key: "filterToggle",
+							options: { all: "In all views together", each: "In each view separately" },
+							defaultValue: DEFAULT_SETTINGS.filterToggle,
 						},
 					},
 				],

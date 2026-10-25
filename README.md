@@ -4,6 +4,7 @@ An Obsidian plugin that tidies the sidebars, especially on iPhone and iPad.
 
 - **Views as buttons on mobile** — the left sidebar views (files, search, bookmarks, tags…) as a row of icon buttons, like on desktop, instead of the drop-down selector.
 - **One menu button** — a drop-down in the tab row with the current view's own buttons (new note, new folder, sort, collapse…), your vaults, "Manage vaults…" and Settings. Desktop and mobile. With vaults and settings in the menu, the desktop sidebar footer (and the vault header on phones) goes away.
+- **Search filters** — a filter for the Files view too (Obsidian has one but hides it), filters styled apart from the vault-wide search, and optionally one switch for all views: show the filter in one view and it shows in all of them.
 - **Views that don't fit** — when the row runs out of room, the remaining views move behind a chevron button.
 - **The same sidebar layout on mobile** — Obsidian keeps the desktop and mobile layouts apart, and the mobile app can't rearrange its sidebars. Arrange the views by dragging on desktop (which sidebar, which order) and phones and tablets follow. On mobile you can also rearrange them in the plugin's settings.
 - **Search that works with the keyboard up** — the tab row sits at the top on mobile, and the sidebar shrinks to stay above the on-screen keyboard.
