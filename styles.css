@@ -244,6 +244,20 @@ body.osm-group-actions .osm-sidebar .workspace-leaf-content.osm-grouped-view .na
 	background-color: var(--background-modifier-form-field);
 }
 
+/* The filters have no outline, so their focus state is Obsidian's focus ring on its own. */
+body.osm-group-actions .osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header:not(.osm-empty-nav-header) > .search-input-container input:is(:focus, :active),
+body.is-mobile .osm-sidebar .workspace-leaf-content[data-type="search"] .search-row .search-input-container input:is(:focus, :active) {
+	box-shadow: 0 0 0 var(--input-border-width-focus) var(--background-modifier-border-focus);
+}
+
+/* Phones: the Search view's field is a box like the filters (Obsidian underlines it), only bigger. */
+body.is-mobile .osm-sidebar .workspace-leaf-content[data-type="search"] .search-row .search-input-container input {
+	border: 0;
+	border-radius: var(--radius-m);
+	box-shadow: none;
+	background-color: var(--background-modifier-hover);
+}
+
 /* Phone sidebars are the form-field colour already, and their fields are square. */
 body.osm-group-actions.is-mobile .osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header:not(.osm-empty-nav-header) > .search-input-container input {
 	background-color: var(--background-modifier-hover);
