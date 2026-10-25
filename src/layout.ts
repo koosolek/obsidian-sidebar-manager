@@ -5,7 +5,7 @@
 // on mobile.
 
 import type { App, WorkspaceLeaf } from "obsidian";
-import { asMobileDrawer, MobileDrawer, tabGroupsIn } from "./obsidian-internals";
+import { asMobileDrawer, MobileDrawer, TabGroup, tabGroupsIn } from "./obsidian-internals";
 
 /** View types per sidebar, in order. */
 export interface SidebarLayout {
@@ -119,5 +119,67 @@ export function applyLayout(app: App, layout: SidebarLayout): boolean {
 		for (const [drawer] of targets) drawer.recomputeChildrenDimensions?.();
 		app.workspace.requestSaveLayout();
 	}
+	return moved;
+}
+
+/**
+ * Desktop: moves and reorders the sidebar views to match `layout` (e.g. as arranged on the phone).
+ * A view moving to the other sidebar goes into that sidebar's first tab group; within each tab
+ * group the views are put in the layout's order. Views it doesn't mention keep their place after
+ * the ones it does; views this device doesn't have are skipped. Returns whether anything moved.
+ */
+export function applyDesktopLayout(app: App, layout: SidebarLayout): boolean {
+	const { leftSplit, rightSplit } = app.workspace;
+	const sides: [unknown, string[]][] = [
+		[leftSplit, layout.left],
+		[rightSplit, layout.right],
+	];
+	if (sides.some(([split]) => tabGroupsIn(split).length === 0)) return false;
+
+	const available = [...leavesIn(leftSplit), ...leavesIn(rightSplit)];
+	const claimed = new Set<WorkspaceLeaf>();
+	const rank = new Map<WorkspaceLeaf, number>();
+	const wanted = sides.map(([, types]) =>
+		types.flatMap((type, index) => {
+			const leaf = available.find((l) => !claimed.has(l) && viewTypeOf(l) === type);
+			if (!leaf) return [];
+			claimed.add(leaf);
+			rank.set(leaf, index);
+			return [leaf];
+		})
+	);
+	// A sidebar is never emptied.
+	for (const [i, [split]] of sides.entries()) {
+		const here = leavesIn(split);
+		const leaving = wanted[1 - i];
+		const count = here.filter((l) => !leaving.includes(l)).length + wanted[i].filter((l) => !here.includes(l)).length;
+		if (count === 0) return false;
+	}
+
+	let moved = false;
+	const parentOf = (leaf: WorkspaceLeaf) => (leaf as unknown as { parent?: TabGroup | null }).parent ?? null;
+	// Across sidebars: into the target sidebar's first tab group.
+	for (const [i, [split]] of sides.entries()) {
+		for (const leaf of wanted[i]) {
+			if (leavesIn(split).includes(leaf)) continue;
+			const target = tabGroupsIn(split)[0];
+			parentOf(leaf)?.removeChild(leaf);
+			target.insertChild(target.children.length, leaf);
+			moved = true;
+		}
+	}
+	// Within each tab group: the layout's order, unmentioned views after.
+	for (const group of [...tabGroupsIn(leftSplit), ...tabGroupsIn(rightSplit)]) {
+		const current = group.children[group.currentTab];
+		const order = [...group.children].sort((a, b) => (rank.get(a) ?? Infinity) - (rank.get(b) ?? Infinity));
+		order.forEach((leaf, index) => {
+			if (group.children[index] === leaf) return;
+			group.removeChild(leaf);
+			group.insertChild(index, leaf);
+			moved = true;
+		});
+		if (current && group.children.includes(current)) group.selectTabIndex(group.children.indexOf(current));
+	}
+	if (moved) app.workspace.requestSaveLayout();
 	return moved;
 }

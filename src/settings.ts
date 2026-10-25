@@ -121,11 +121,13 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 			},
 			{
 				type: "group",
-				heading: "Sidebar layout",
+				heading: "Sidebar order",
 				items: [
 					{
-						name: "Mobile follows desktop",
-						desc: "Which views sit in which sidebar, and in what order. Arrange them by dragging on desktop, and phones and tablets follow. You can also rearrange here on mobile; the next rearrangement on desktop replaces it.",
+						name: "Sync between desktop and mobile",
+						desc: Platform.isMobile
+							? "Keep which views sit in which sidebar, and their order, the same on desktop and mobile. Arrange them by dragging in the sidebars on desktop, or in the list below: views above the line are in the left sidebar, views below it in the right one."
+							: "Keep which views sit in which sidebar, and their order, the same on desktop and mobile. Arrange them by dragging in the sidebars here; on mobile, in these settings.",
 						control: { type: "toggle", key: "syncLayout", defaultValue: DEFAULT_SETTINGS.syncLayout },
 					},
 				],
@@ -152,9 +154,8 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 
 	/** Mobile: the arrangement as two reorderable lists, with a button to move a view across. */
 	/**
-	 * Mobile: the arrangement as one reorderable list, the left sidebar's views first, then a
-	 * "Right sidebar" divider, then the right sidebar's. Dragging a view past the divider moves it
-	 * to the other sidebar.
+	 * Mobile: the arrangement as one reorderable list, the left sidebar's views first, then a line,
+	 * then the right sidebar's. Dragging a view past the line moves it to the other sidebar.
 	 */
 	private layoutLists(): SettingDefinitionItem<keyof SidebarManagerSettings>[] {
 		const layout = this.plugin.layoutForEditing();
@@ -164,7 +165,7 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 			type === DIVIDER
 				? {
 						name: "Right sidebar",
-						desc: "Views below this line are in the right sidebar.",
+						searchable: false,
 						render: (setting) => {
 							setting.settingEl.addClass("osm-layout-divider");
 						},
@@ -174,7 +175,6 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 		return [
 			{
 				type: "list",
-				heading: "Left sidebar",
 				visible: () => Platform.isMobile && this.plugin.settings.syncLayout,
 				onReorder: (from: number, to: number) => {
 					const next = [...entries];

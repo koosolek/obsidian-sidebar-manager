@@ -12,7 +12,7 @@ import {
 	ViewFilter,
 	tabHeaderOf,
 } from "./obsidian-internals";
-import { applyLayout, isSidebarLayout, readLayout, sameLayout, SidebarLayout, viewTypeOf } from "./layout";
+import { applyDesktopLayout, applyLayout, isSidebarLayout, readLayout, sameLayout, SidebarLayout, viewTypeOf } from "./layout";
 import { DEFAULT_SETTINGS, SidebarManagerSettings, SidebarManagerSettingTab } from "./settings";
 
 /** A row of view tabs in the left sidebar that gets our buttons. */
@@ -139,10 +139,24 @@ export default class SidebarManagerPlugin extends Plugin {
 		this.settingTab?.update();
 	}
 
-	/** Mobile: arranges the sidebars as recorded. */
+	/**
+	 * Arranges this device's sidebars as recorded. Mobile always follows the recording. The
+	 * desktop follows it when it was changed elsewhere (arranged on the phone) since the desktop
+	 * last recorded or applied it; it then remembers its resulting arrangement, so it doesn't
+	 * record that back as a change of its own.
+	 */
 	private followLayout() {
-		if (!Platform.isMobile || !this.settings.syncLayout || !this.settings.layout) return;
-		if (applyLayout(this.app, this.settings.layout)) this.requestRefresh();
+		const layout = this.settings.layout;
+		if (!this.settings.syncLayout || !layout) return;
+		if (Platform.isMobile) {
+			if (applyLayout(this.app, layout)) this.requestRefresh();
+			return;
+		}
+		if (this.settings.desktopLayout === null || sameLayout(layout, this.settings.desktopLayout)) return;
+		const moved = applyDesktopLayout(this.app, layout);
+		this.settings.desktopLayout = readLayout(this.app);
+		void this.saveData(this.settings);
+		if (moved) this.requestRefresh();
 	}
 
 	/**

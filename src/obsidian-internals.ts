@@ -33,6 +33,8 @@ export interface TabGroup {
 	children: WorkspaceLeaf[];
 	currentTab: number;
 	selectTabIndex(index: number): void;
+	insertChild(index: number, leaf: WorkspaceLeaf): void;
+	removeChild(leaf: WorkspaceLeaf): void;
 }
 
 /** The element a leaf shows as its tab (an icon button in sidebars). */

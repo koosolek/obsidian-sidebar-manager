@@ -431,9 +431,29 @@ body.osm-group-actions.is-phone .workspace-drawer.osm-sidebar .workspace-leaf-co
 	padding-bottom: calc(var(--osm-keyboard-inset) + var(--size-4-2));
 }
 
-/* Settings, sidebar layout on mobile: the line between the left and the right sidebar's views. */
-.osm-layout-divider .setting-item-name {
-	color: var(--text-muted);
-	font-size: var(--font-ui-smaller);
-	font-weight: var(--font-semibold);
+/* Settings, sidebar order on mobile: the line between the left and the right sidebar's views.
+   Just a line: no name, no drag handle (it stays put; the views move across it). */
+.setting-items > .setting-item.osm-layout-divider {
+	min-height: 0;
+	padding: var(--size-4-1) 20px;
+	pointer-events: none;
+}
+
+/* It replaces the thin lines between rows on both of its sides (same 20px inset as those). */
+.setting-items > .setting-item.osm-layout-divider::before,
+.setting-items > .setting-item.osm-layout-divider + .setting-item::before {
+	display: none;
+}
+
+.setting-items > .setting-item.osm-layout-divider > :is(.setting-item-icon, .setting-item-info, .setting-item-control) {
+	display: none;
+}
+
+.setting-items > .setting-item.osm-layout-divider::after {
+	content: "";
+	display: block;
+	width: 100%;
+	height: 2px;
+	border-radius: 1px;
+	background-color: var(--text-faint);
 }

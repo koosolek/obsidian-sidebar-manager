@@ -22,7 +22,8 @@ TypeScript, esbuild, `obsidian` API typings. No runtime dependencies.
 
 - `src/main.ts` — plugin: finds the tab rows ("hosts"), adds our buttons, hides the natives they replace, restores everything on unload
 - `src/dropdown.ts` — our drop-downs (sections, items, borrowed elements); it *moves* the view's real `.nav-buttons-container` into the pop-over (keeps native handlers/states) and moves it back on close
-- `src/layout.ts` — sidebar layout sync: desktop records view types per sidebar into settings (`layout`) when the user rearranges; mobile moves/reorders drawer leaves to match (moved, not recreated). Settings has a mobile-only list editor
+- `src/layout.ts` — sidebar order sync, both ways: `layout` in settings is shared; desktop records its own rearrangements (tracked via `desktopLayout`) and applies layouts changed elsewhere; mobile always applies, and records edits from its settings list (one list, a line between left and right). Leaves are moved, not recreated
+- `src/files-filter.ts` — opens folders holding matches while the Files filter has a query; closes only what it opened
 - `src/keyboard.ts` — keyboard inset for the mobile drawer (Capacitor `keyboardWillShow` events, `--keyboard-height`, visualViewport)
 - `src/obsidian-internals.ts` — typed shapes of the private Obsidian internals we rely on (mobile drawer, tab groups)
 - `styles.css` — everything is scoped under `osm-*` body/element classes
