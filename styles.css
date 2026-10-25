@@ -430,3 +430,10 @@ body.osm-group-actions.is-phone .workspace-drawer.osm-sidebar .workspace-leaf-co
 .workspace-drawer.osm-sidebar.osm-keyboard-open .workspace-drawer-inner {
 	padding-bottom: calc(var(--osm-keyboard-inset) + var(--size-4-2));
 }
+
+/* Settings, sidebar layout on mobile: the line between the left and the right sidebar's views. */
+.osm-layout-divider .setting-item-name {
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-semibold);
+}

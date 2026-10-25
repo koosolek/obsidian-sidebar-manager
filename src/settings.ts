@@ -151,46 +151,43 @@ export class SidebarManagerSettingTab extends PluginSettingTab {
 	}
 
 	/** Mobile: the arrangement as two reorderable lists, with a button to move a view across. */
+	/**
+	 * Mobile: the arrangement as one reorderable list, the left sidebar's views first, then a
+	 * "Right sidebar" divider, then the right sidebar's. Dragging a view past the divider moves it
+	 * to the other sidebar.
+	 */
 	private layoutLists(): SettingDefinitionItem<keyof SidebarManagerSettings>[] {
-		const visible = () => Platform.isMobile && this.plugin.settings.syncLayout;
 		const layout = this.plugin.layoutForEditing();
-		const save = async (next: SidebarLayout) => {
-			await this.plugin.setLayout(next);
-			this.update();
-		};
-		const list = (side: "left" | "right", heading: string) => {
-			const other = side === "left" ? "right" : "left";
-			const items: SettingGroupItem<keyof SidebarManagerSettings>[] = layout[side].map((type, index) => ({
-				name: this.viewName(type),
-				render: (setting) => {
-					setting.addExtraButton((b) =>
-						b
-							.setIcon(side === "left" ? "lucide-arrow-right" : "lucide-arrow-left")
-							.setTooltip(`Move to the ${other} sidebar`)
-							.onClick(() => {
-								const next = { ...layout, left: [...layout.left], right: [...layout.right] };
-								next[side].splice(index, 1);
-								next[other].push(type);
-								void save(next);
-							})
-					);
-				},
-			}));
-			return {
-				type: "list" as const,
-				heading,
-				visible,
-				emptyState: "No views",
+		const DIVIDER = null;
+		const entries: (string | null)[] = [...layout.left, DIVIDER, ...layout.right];
+		const items: SettingGroupItem<keyof SidebarManagerSettings>[] = entries.map((type) =>
+			type === DIVIDER
+				? {
+						name: "Right sidebar",
+						desc: "Views below this line are in the right sidebar.",
+						render: (setting) => {
+							setting.settingEl.addClass("osm-layout-divider");
+						},
+					}
+				: { name: this.viewName(type), render: () => {} }
+		);
+		return [
+			{
+				type: "list",
+				heading: "Left sidebar",
+				visible: () => Platform.isMobile && this.plugin.settings.syncLayout,
 				onReorder: (from: number, to: number) => {
-					const next = { ...layout, left: [...layout.left], right: [...layout.right] };
-					const [moved] = next[side].splice(from, 1);
-					next[side].splice(to, 0, moved);
-					void save(next);
+					const next = [...entries];
+					const [moved] = next.splice(from, 1);
+					next.splice(to, 0, moved);
+					const split = next.indexOf(DIVIDER);
+					const left = next.slice(0, split).filter((t): t is string => t !== DIVIDER);
+					const right = next.slice(split + 1).filter((t): t is string => t !== DIVIDER);
+					void this.plugin.setLayout({ ...layout, left, right }).then(() => this.update());
 				},
 				items,
-			};
-		};
-		return [list("left", "Left sidebar"), list("right", "Right sidebar")];
+			},
+		];
 	}
 
 	/** A view type's name as Obsidian shows it, if a view of that type is open. */
