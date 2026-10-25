@@ -207,6 +207,12 @@ body.osm-group-actions.is-mobile .osm-sidebar .workspace-leaf-content.osm-groupe
 	margin: var(--size-4-1) var(--size-4-1) 0;
 }
 
+/* Under a filter, the list starts after the same 8px gap as the Search view's results do (the
+   header's bottom padding); the lists' own top padding would add to it, unevenly per view. */
+body.osm-group-actions .osm-sidebar .workspace-leaf-content.osm-grouped-view .nav-header:not(.osm-empty-nav-header) ~ div:is(.view-content, .nav-files-container, .tag-container, .backlink-pane, .outgoing-link-pane) {
+	padding-top: 0;
+}
+
 /* Global search vs. a view's filter: the Search view searches all notes, so its field is the
    prominent one; a view's filter only narrows that view's list, so it's compact and quiet, with a
    filter icon instead of the magnifier. (Obsidian sizes the field, icon and clear button from
